@@ -1,5 +1,12 @@
 databaseChangeLog:
   - changeSet:
+      id: 0-enable-pgcrypto
+      author: nandes
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+  - changeSet:
       id: 1-create-users-table
       author: nandes
       changes:

@@ -1,6 +1,6 @@
 # Makefile for database migrations using Liquibase
 
-.PHONY: migrate status rollback help
+.PHONY: migrate status rollback seed help
 
 ## help: Show this help message
 help:
@@ -10,6 +10,10 @@ help:
 	@echo "  make rollback     - Rollback migrations (requires COUNT parameter, e.g., make rollback COUNT=1)"
 	@echo "  make rollback-all - Drop all database tables and schema (Complete reset)"
 
+
+## seed: Run database seeder
+seed:
+	./mvnw spring-boot:run -Dspring-boot.run.profiles=seed
 
 ## migrate: Run database migrations
 migrate:
