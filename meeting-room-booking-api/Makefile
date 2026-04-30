@@ -35,3 +35,6 @@ rollback:
 rollback-all:
 	./mvnw liquibase:dropAll
 
+test:
+	./mvnw test -Dtest=AuthControllerTest
+
