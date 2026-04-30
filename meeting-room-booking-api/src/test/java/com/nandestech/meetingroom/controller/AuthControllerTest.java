@@ -4,6 +4,7 @@ import com.nandestech.meetingroom.dto.AuthResponseData;
 import com.nandestech.meetingroom.dto.LoginRequest;
 import com.nandestech.meetingroom.dto.RefreshRequest;
 import com.nandestech.meetingroom.service.AuthService;
+import com.nandestech.meetingroom.service.PasetoTokenService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -26,6 +27,9 @@ public class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private PasetoTokenService pasetoTokenService;
 
     @Autowired
     private JsonMapper jsonMapper;
