@@ -48,7 +48,8 @@ public class AuthFilter implements Filter {
 
         String token = authHeader.substring(7);
         try {
-            pasetoTokenService.verifyToken(token);
+            String username = pasetoTokenService.verifyToken(token);
+            httpRequest.setAttribute("X-Username", username);
             chain.doFilter(request, response);
         } catch (RuntimeException e) {
             sendUnauthorizedResponse(httpResponse);
