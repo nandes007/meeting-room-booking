@@ -23,6 +23,9 @@ public class AuthFilter implements Filter {
     @Autowired
     private PasetoTokenService pasetoTokenService;
 
+    @Autowired
+    private com.nandestech.meetingroom.repository.UserRepository userRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -49,7 +52,11 @@ public class AuthFilter implements Filter {
         String token = authHeader.substring(7);
         try {
             String username = pasetoTokenService.verifyToken(token);
+            com.nandestech.meetingroom.entity.User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            
             httpRequest.setAttribute("X-Username", username);
+            httpRequest.setAttribute("X-Role", user.getRole());
             chain.doFilter(request, response);
         } catch (RuntimeException e) {
             sendUnauthorizedResponse(httpResponse);

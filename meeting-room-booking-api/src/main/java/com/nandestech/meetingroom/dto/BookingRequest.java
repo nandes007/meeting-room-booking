@@ -16,22 +16,22 @@ import java.time.LocalDateTime;
 public class BookingRequest {
 
 
-    @NotNull(message = "room_id is required")
+    @NotNull(message = "Room ID is required to create a booking")
     @JsonProperty("room_id")
     private Long roomId;
 
-    @NotNull(message = "start_time is required")
+    @NotNull(message = "Start time is required")
     @JsonProperty("start_time")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startTime;
 
-    @NotNull(message = "end_time is required")
+    @NotNull(message = "End time is required")
     @JsonProperty("end_time")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
 
     private String status;
 
-    @NotBlank(message = "description is required")
+    @NotBlank(message = "Please provide a description for the meeting")
     private String description;
 }

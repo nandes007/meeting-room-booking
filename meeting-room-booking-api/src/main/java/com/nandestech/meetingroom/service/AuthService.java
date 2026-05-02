@@ -58,12 +58,13 @@ public class AuthService {
 
         if (refreshToken.getExpiryDate().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(refreshToken);
-            throw new RuntimeException("Invalid token"); // Or "Token expired" but issue says "Invalid token" in failed response example
+            throw new RuntimeException("Invalid token");
         }
 
         refreshTokenRepository.delete(refreshToken);
 
         String username = refreshToken.getUsername();
+
         String newAccessToken = pasetoTokenService.generateAccessToken(username);
         String newRefreshTokenValue = pasetoTokenService.generateRefreshToken(username);
 

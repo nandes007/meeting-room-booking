@@ -2,8 +2,11 @@ package com.nandestech.meetingroom.controller;
 
 import com.nandestech.meetingroom.dto.RoomRequest;
 import com.nandestech.meetingroom.dto.RoomResponse;
+import com.nandestech.meetingroom.entity.User;
+import com.nandestech.meetingroom.repository.UserRepository;
 import com.nandestech.meetingroom.service.PasetoTokenService;
 import com.nandestech.meetingroom.service.RoomService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -15,8 +18,10 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -40,14 +45,21 @@ public class RoomControllerTest {
     @MockitoBean
     private PasetoTokenService pasetoTokenService;
 
+    @MockitoBean
+    private UserRepository userRepository;
+
     @Autowired
     private JsonMapper jsonMapper;
 
     private static final String TOKEN = "valid-token";
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         when(pasetoTokenService.verifyToken(TOKEN)).thenReturn("user");
+        User user = new User();
+        user.setUsername("user");
+        user.setRole("ADMIN");
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
     }
 
     @Test
@@ -69,10 +81,11 @@ public class RoomControllerTest {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        when(roomService.createRoom(any(RoomRequest.class))).thenReturn(response);
+        when(roomService.createRoom(any(RoomRequest.class), eq("ADMIN"))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/rooms")
                         .header("Authorization", "Bearer " + TOKEN)
+                        .requestAttr("X-Role", "ADMIN")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -81,28 +94,55 @@ public class RoomControllerTest {
     }
 
     @Test
+    void createRoom_Forbidden() throws Exception {
+        RoomRequest request = new RoomRequest("Room 1", 10, "Location 1", true);
+        
+        // Mock USER role for this request
+        User user = new User();
+        user.setUsername("user");
+        user.setRole("USER");
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+
+        when(roomService.createRoom(any(RoomRequest.class), eq("USER")))
+                .thenThrow(new RuntimeException("Access denied: Only administrators can perform this action"));
+
+        mockMvc.perform(post("/api/v1/rooms")
+                        .header("Authorization", "Bearer " + TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value("failed"))
+                .andExpect(jsonPath("$.message").value("Access denied: Only administrators can perform this action"));
+    }
+
+    @Test
     void createRoom_ValidationError() throws Exception {
         RoomRequest request = new RoomRequest("", null, "", null); // Invalid fields
 
         mockMvc.perform(post("/api/v1/rooms")
                         .header("Authorization", "Bearer " + TOKEN)
+                        .requestAttr("X-Role", "ADMIN")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("failed"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.data.name").value("Room name is required"));
     }
 
     @Test
     void createRoom_ServiceError() throws Exception {
         RoomRequest request = new RoomRequest("Room 1", 10, "Location 1", true);
-        when(roomService.createRoom(any(RoomRequest.class))).thenThrow(new RuntimeException("Error"));
+        when(roomService.createRoom(any(RoomRequest.class), eq("ADMIN"))).thenThrow(new RuntimeException("Database error"));
 
         mockMvc.perform(post("/api/v1/rooms")
                         .header("Authorization", "Bearer " + TOKEN)
+                        .requestAttr("X-Role", "ADMIN")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("failed"))
-                .andExpect(jsonPath("$.message").value("failed to create room"));
+                .andExpect(jsonPath("$.message").value("Database error"));
     }
 
     @Test
@@ -129,7 +169,7 @@ public class RoomControllerTest {
                         .header("Authorization", "Bearer " + TOKEN))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("failed"))
-                .andExpect(jsonPath("$.message").value("failed to get rooms"));
+                .andExpect(jsonPath("$.message").value("Error"));
     }
 
     @Test
@@ -155,7 +195,7 @@ public class RoomControllerTest {
                         .header("Authorization", "Bearer " + TOKEN))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("failed"))
-                .andExpect(jsonPath("$.message").value("failed to get room"));
+                .andExpect(jsonPath("$.message").value("Room not found"));
     }
 
     @Test
@@ -168,10 +208,11 @@ public class RoomControllerTest {
                 .isAvailable(false)
                 .build();
 
-        when(roomService.updateRoom(eq(1L), any(RoomRequest.class))).thenReturn(response);
+        when(roomService.updateRoom(eq(1L), any(RoomRequest.class), eq("ADMIN"))).thenReturn(response);
 
         mockMvc.perform(patch("/api/v1/rooms/1")
                         .header("Authorization", "Bearer " + TOKEN)
+                        .requestAttr("X-Role", "ADMIN")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -182,23 +223,25 @@ public class RoomControllerTest {
     @Test
     void updateRoom_ServiceError() throws Exception {
         RoomRequest request = new RoomRequest("Updated Room", 20, "Location 2", false);
-        when(roomService.updateRoom(eq(1L), any(RoomRequest.class))).thenThrow(new RuntimeException("Error"));
+        when(roomService.updateRoom(eq(1L), any(RoomRequest.class), eq("ADMIN"))).thenThrow(new RuntimeException("Error"));
 
         mockMvc.perform(patch("/api/v1/rooms/1")
                         .header("Authorization", "Bearer " + TOKEN)
+                        .requestAttr("X-Role", "ADMIN")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("failed"))
-                .andExpect(jsonPath("$.message").value("failed to update room"));
+                .andExpect(jsonPath("$.message").value("Error"));
     }
 
     @Test
     void deleteRoom_Success() throws Exception {
-        doNothing().when(roomService).deleteRoom(1L);
+        doNothing().when(roomService).deleteRoom(1L, "ADMIN");
 
         mockMvc.perform(delete("/api/v1/rooms/1")
-                        .header("Authorization", "Bearer " + TOKEN))
+                        .header("Authorization", "Bearer " + TOKEN)
+                        .requestAttr("X-Role", "ADMIN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.message").value("room deleted successfully"));
@@ -206,12 +249,13 @@ public class RoomControllerTest {
 
     @Test
     void deleteRoom_ServiceError() throws Exception {
-        doThrow(new RuntimeException("Error")).when(roomService).deleteRoom(1L);
+        doThrow(new RuntimeException("Error")).when(roomService).deleteRoom(1L, "ADMIN");
 
         mockMvc.perform(delete("/api/v1/rooms/1")
-                        .header("Authorization", "Bearer " + TOKEN))
+                        .header("Authorization", "Bearer " + TOKEN)
+                        .requestAttr("X-Role", "ADMIN"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("failed"))
-                .andExpect(jsonPath("$.message").value("failed to delete room"));
+                .andExpect(jsonPath("$.message").value("Error"));
     }
 }

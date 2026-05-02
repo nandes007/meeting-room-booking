@@ -31,62 +31,46 @@ public class BookingController {
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
             @Valid @RequestBody BookingRequest request,
             @RequestAttribute("X-Username") String username) {
-        try {
-            BookingResponse data = bookingService.createBooking(request, username);
-            return ResponseEntity.ok(ApiResponse.success(data));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.failed("failed to create booking"));
-        }
+        BookingResponse data = bookingService.createBooking(request, username);
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<BookingResponse>>> getAllBookings() {
-        try {
-            List<BookingResponse> data = bookingService.getAllBookings();
-            return ResponseEntity.ok(ApiResponse.success(data));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.failed("failed to get rooms"));
-        }
+    public ResponseEntity<ApiResponse<List<BookingResponse>>> getAllBookings(
+            @RequestAttribute("X-Username") String username,
+            @RequestAttribute("X-Role") String role) {
+        List<BookingResponse> data = bookingService.getAllBookings(role, username);
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<BookingResponse>> getBookingById(@PathVariable Long id) {
-        try {
-            BookingResponse data = bookingService.getBookingById(id);
-            return ResponseEntity.ok(ApiResponse.success(data));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.failed("failed to get room"));
-        }
+    public ResponseEntity<ApiResponse<BookingResponse>> getBookingById(
+            @PathVariable Long id,
+            @RequestAttribute("X-Username") String username,
+            @RequestAttribute("X-Role") String role) {
+        BookingResponse data = bookingService.getBookingById(id, role, username);
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<BookingResponse>> updateBooking(
             @PathVariable Long id,
             @Valid @RequestBody BookingRequest request,
-            @RequestAttribute("X-Username") String username) {
-        try {
-            BookingResponse data = bookingService.updateBooking(id, request, username);
-            return ResponseEntity.ok(ApiResponse.success(data));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.failed("failed to update room"));
-        }
+            @RequestAttribute("X-Username") String username,
+            @RequestAttribute("X-Role") String role) {
+        BookingResponse data = bookingService.updateBooking(id, request, username, role);
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteBooking(@PathVariable Long id) {
-        try {
-            bookingService.deleteBooking(id);
-            return ResponseEntity.ok(ApiResponse.<Void>builder()
-                    .status("success")
-                    .message("room deleted successfully")
-                    .build());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.failed("failed to delete room"));
-        }
+    public ResponseEntity<ApiResponse<Void>> deleteBooking(
+            @PathVariable Long id,
+            @RequestAttribute("X-Username") String username,
+            @RequestAttribute("X-Role") String role) {
+        bookingService.deleteBooking(id, username, role);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .status("success")
+                .message("Booking cancelled successfully")
+                .build());
     }
 }

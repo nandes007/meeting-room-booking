@@ -31,15 +31,17 @@ public class BookingService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        validateBookingTime(req.getStartTime(), req.getEndTime());
+
         Room room = roomRepository.findById(req.getRoomId())
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
         if (!room.getIsAvailable()) {
-            throw new RuntimeException("Room is not available");
+            throw new RuntimeException("Room is not available for booking");
         }
 
         if (bookingRepository.existsOverlappingBooking(req.getRoomId(), req.getStartTime(), req.getEndTime())) {
-            throw new RuntimeException("Room is already booked for the requested time");
+            throw new RuntimeException("The room is already booked for the selected time slot");
         }
 
         Booking booking = Booking.builder()
@@ -57,30 +59,53 @@ public class BookingService {
         return toResponse(booking);
     }
 
-    public List<BookingResponse> getAllBookings() {
-        return bookingRepository.findAll().stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+    public List<BookingResponse> getAllBookings(String role, String username) {
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            return bookingRepository.findAll().stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        } else {
+            // Normal users might only see their own bookings? 
+            // The prompt says "normal user can only book... and cancel". 
+            // I'll return only their own bookings for list if not admin.
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            return bookingRepository.findAll().stream()
+                    .filter(b -> b.getUserId().equals(user.getId()))
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        }
     }
 
-    public BookingResponse getBookingById(Long id) {
+    public BookingResponse getBookingById(Long id, String role, String username) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
+        
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            if (!booking.getUserId().equals(user.getId())) {
+                throw new RuntimeException("Access denied: You can only view your own bookings");
+            }
+        }
+        
         return toResponse(booking);
     }
 
-    public BookingResponse updateBooking(Long id, BookingRequest req, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public BookingResponse updateBooking(Long id, BookingRequest req, String username, String role) {
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            throw new RuntimeException("Access denied: Only administrators can edit bookings");
+        }
 
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
+        validateBookingTime(req.getStartTime(), req.getEndTime());
+
         if (bookingRepository.existsOverlappingBookingExcluding(req.getRoomId(), id, req.getStartTime(), req.getEndTime())) {
-            throw new RuntimeException("Room is already booked for the requested time");
+            throw new RuntimeException("The room is already booked for the selected time slot");
         }
 
-        booking.setUserId(user.getId());
         booking.setRoomId(req.getRoomId());
         booking.setStartTime(req.getStartTime());
         booking.setEndTime(req.getEndTime());
@@ -94,10 +119,28 @@ public class BookingService {
         return toResponse(booking);
     }
 
-    public void deleteBooking(Long id) {
+    public void deleteBooking(Long id, String username, String role) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            if (!booking.getUserId().equals(user.getId())) {
+                throw new RuntimeException("Access denied: You can only cancel your own bookings");
+            }
+        }
+
         bookingRepository.delete(booking);
+    }
+
+    private void validateBookingTime(LocalDateTime start, LocalDateTime end) {
+        if (start.isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Booking cannot be made for past dates");
+        }
+        if (end.isBefore(start) || end.isEqual(start)) {
+            throw new RuntimeException("End time must be after start time");
+        }
     }
 
     private BookingResponse toResponse(Booking booking) {
