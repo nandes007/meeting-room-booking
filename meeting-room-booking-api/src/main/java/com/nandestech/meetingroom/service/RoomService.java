@@ -17,7 +17,8 @@ public class RoomService {
     @Autowired
     private RoomRepository roomRepository;
 
-    public RoomResponse createRoom(RoomRequest req) {
+    public RoomResponse createRoom(RoomRequest req, String role) {
+        validateAdmin(role);
         Room room = Room.builder()
                 .name(req.getName())
                 .capacity(req.getCapacity())
@@ -43,7 +44,8 @@ public class RoomService {
         return toResponse(room);
     }
 
-    public RoomResponse updateRoom(Long id, RoomRequest req) {
+    public RoomResponse updateRoom(Long id, RoomRequest req, String role) {
+        validateAdmin(role);
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
@@ -57,10 +59,17 @@ public class RoomService {
         return toResponse(room);
     }
 
-    public void deleteRoom(Long id) {
+    public void deleteRoom(Long id, String role) {
+        validateAdmin(role);
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
         roomRepository.delete(room);
+    }
+
+    private void validateAdmin(String role) {
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            throw new RuntimeException("Access denied: Only administrators can perform this action");
+        }
     }
 
     private RoomResponse toResponse(Room room) {

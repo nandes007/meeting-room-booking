@@ -12,16 +12,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RoomRequest {
 
-    @NotBlank(message = "name is required")
+    @NotBlank(message = "Room name is required")
     private String name;
 
-    @NotNull(message = "capacity is required")
+    @NotNull(message = "Room capacity is required")
     private Integer capacity;
 
-    @NotBlank(message = "location is required")
+    @NotBlank(message = "Room location is required")
     private String location;
 
-    @NotNull(message = "is_available is required")
+    @NotNull(message = "Availability status is required")
     @JsonProperty("is_available")
     private Boolean isAvailable;
 }

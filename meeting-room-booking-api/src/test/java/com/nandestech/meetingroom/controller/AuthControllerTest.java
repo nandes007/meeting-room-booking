@@ -3,6 +3,7 @@ package com.nandestech.meetingroom.controller;
 import com.nandestech.meetingroom.dto.AuthResponseData;
 import com.nandestech.meetingroom.dto.LoginRequest;
 import com.nandestech.meetingroom.dto.RefreshRequest;
+import com.nandestech.meetingroom.repository.UserRepository;
 import com.nandestech.meetingroom.service.AuthService;
 import com.nandestech.meetingroom.service.PasetoTokenService;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,9 @@ public class AuthControllerTest {
 
     @MockitoBean
     private PasetoTokenService pasetoTokenService;
+
+    @MockitoBean
+    private UserRepository userRepository;
 
     @Autowired
     private JsonMapper jsonMapper;
