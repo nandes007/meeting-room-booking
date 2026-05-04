@@ -36,8 +36,10 @@ public class AuthFilter implements Filter {
 
         String path = httpRequest.getRequestURI();
 
-        // Skip auth for login and refresh endpoints
-        if (path.startsWith("/api/v1/auth")) {
+        // Skip auth for login, refresh, and swagger endpoints
+        if (path.startsWith("/api/v1/auth")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")) {
             chain.doFilter(request, response);
             return;
         }
