@@ -60,16 +60,15 @@ const handleSubmit = async () => {
       <p class="text-sm text-gray-400 mt-1">Login to access your account</p>
     </div>
 
-    <AuthTabs v-model="inputType" :tabs="inputTypeTabs" />
+    <!-- <AuthTabs v-model="inputType" :tabs="inputTypeTabs" /> -->
 
     <form @submit.prevent="handleSubmit" class="flex flex-col gap-5">
-      <PhoneInput
+      <!-- <PhoneInput
         v-if="inputType === 'phone'"
         v-model="phone"
         :error="errors.phone"
-      />
+      /> -->
       <EmailInput
-        v-else
         v-model="email"
         :error="errors.email"
       />
@@ -103,11 +102,11 @@ const handleSubmit = async () => {
         :disabled="authStore.isLoading"
       />
 
-      <AppDivider />
+      <!-- <AppDivider /> -->
 
-      <SocialLogin />
+      <!-- <SocialLogin /> -->
 
-      <p class="text-center text-sm text-gray-400 mt-2">
+      <!-- <p class="text-center text-sm text-gray-400 mt-2">
         Don't have an account? 
         <button
           type="button"
@@ -116,7 +115,7 @@ const handleSubmit = async () => {
         >
           Sign Up
         </button>
-      </p>
+      </p> -->
     </form>
   </div>
 </template>
