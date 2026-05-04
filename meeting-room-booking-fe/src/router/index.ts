@@ -19,7 +19,13 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('../components/TheWelcome.vue'), // Placeholder
+      component: () => import('../views/CalendarView.vue'),
+      meta: { auth: true }
+    },
+    {
+      path: '/calendar',
+      name: 'calendar',
+      component: () => import('../views/CalendarView.vue'),
       meta: { auth: true }
     }
   ]
