@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
-import AppInput from '../shared/AppInput.vue';
-import AppButton from '../shared/AppButton.vue';
-import AppDateInput from '../shared/AppDateInput.vue';
+import AppInput from '@/components/shared/AppInput.vue';
+import AppButton from '@/components/shared/AppButton.vue';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 
 interface Props {
   isOpen: boolean;

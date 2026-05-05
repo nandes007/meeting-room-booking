@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { PlusIcon } from '@heroicons/vue/24/solid';
-import { useCalendar } from '../composables/useCalendar';
-import { useBookingStore } from '../stores/bookingStore';
-import CalendarHeader from '../components/calendar/CalendarHeader.vue';
-import WeekStrip from '../components/calendar/WeekStrip.vue';
-import DaySchedule from '../components/calendar/DaySchedule.vue';
-import CreateBookingModal from '../components/calendar/CreateBookingModal.vue';
-import type { DayScheduleData } from '../types/booking';
+import { useCalendar } from '@/composables/useCalendar';
+import { useBookingStore } from '@/stores/bookingStore';
+import CalendarHeader from '@/components/calendar/CalendarHeader.vue';
+import WeekStrip from '@/components/calendar/WeekStrip.vue';
+import DaySchedule from '@/components/calendar/DaySchedule.vue';
+import CreateBookingModal from '@/components/calendar/CreateBookingModal.vue';
+import type { DayScheduleData } from '@/types/booking';
 
 const { 
   currentDate, 

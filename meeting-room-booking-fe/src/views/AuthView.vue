@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import LoginForm from '../components/auth/LoginForm.vue';
-import RegisterForm from '../components/auth/RegisterForm.vue';
-import type { AuthMode } from '../types/auth';
+import LoginForm from '@/components/auth/LoginForm.vue';
+import RegisterForm from '@/components/auth/RegisterForm.vue';
+import type { AuthMode } from '@/types/auth';
 
 const router = useRouter();
 const authMode = ref<AuthMode>('login');
