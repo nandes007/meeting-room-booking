@@ -22,4 +22,6 @@ public class UserResponse {
     
     @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
+
+    private java.util.List<BookingResponse> bookings;
 }

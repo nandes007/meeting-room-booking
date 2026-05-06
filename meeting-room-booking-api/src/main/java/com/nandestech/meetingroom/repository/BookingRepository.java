@@ -20,4 +20,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     boolean existsOverlappingBookingExcluding(@Param("roomId") Long roomId, @Param("excludeId") Long excludeId, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 
     Page<Booking> findByUserId(Long userId, Pageable pageable);
+    java.util.List<Booking> findByUserId(Long userId);
 }

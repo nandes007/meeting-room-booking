@@ -61,6 +61,7 @@ public class UserControllerTest {
                 .role("SUPERADMIN")
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
+                .bookings(java.util.Collections.emptyList())
                 .build();
 
         when(userService.getCurrentUser(eq(USERNAME))).thenReturn(response);
