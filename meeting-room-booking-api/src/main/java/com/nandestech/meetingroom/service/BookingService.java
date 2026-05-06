@@ -9,11 +9,12 @@ import com.nandestech.meetingroom.repository.BookingRepository;
 import com.nandestech.meetingroom.repository.RoomRepository;
 import com.nandestech.meetingroom.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
@@ -59,21 +60,16 @@ public class BookingService {
         return toResponse(booking);
     }
 
-    public List<BookingResponse> getAllBookings(String role, String username) {
-        if ("ADMIN".equalsIgnoreCase(role)) {
-            return bookingRepository.findAll().stream()
-                    .map(this::toResponse)
-                    .collect(Collectors.toList());
+    public Page<BookingResponse> getAllBookings(String role, String username, int page, int limit) {
+        Pageable pageable = PageRequest.of(page - 1, limit);
+        if ("ADMIN".equalsIgnoreCase(role) || "SUPERADMIN".equalsIgnoreCase(role)) {
+            return bookingRepository.findAll(pageable)
+                    .map(this::toResponse);
         } else {
-            // Normal users might only see their own bookings? 
-            // The prompt says "normal user can only book... and cancel". 
-            // I'll return only their own bookings for list if not admin.
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            return bookingRepository.findAll().stream()
-                    .filter(b -> b.getUserId().equals(user.getId()))
-                    .map(this::toResponse)
-                    .collect(Collectors.toList());
+            return bookingRepository.findByUserId(user.getId(), pageable)
+                    .map(this::toResponse);
         }
     }
 
@@ -81,7 +77,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
         
-        if (!"ADMIN".equalsIgnoreCase(role)) {
+        if (!"ADMIN".equalsIgnoreCase(role) && !"SUPERADMIN".equalsIgnoreCase(role)) {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
             if (!booking.getUserId().equals(user.getId())) {
@@ -93,7 +89,7 @@ public class BookingService {
     }
 
     public BookingResponse updateBooking(Long id, BookingRequest req, String username, String role) {
-        if (!"ADMIN".equalsIgnoreCase(role)) {
+        if (!"ADMIN".equalsIgnoreCase(role) && !"SUPERADMIN".equalsIgnoreCase(role)) {
             throw new RuntimeException("Access denied: Only administrators can edit bookings");
         }
 
@@ -122,8 +118,8 @@ public class BookingService {
     public void deleteBooking(Long id, String username, String role) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
-
-        if (!"ADMIN".equalsIgnoreCase(role)) {
+    
+        if (!"ADMIN".equalsIgnoreCase(role) && !"SUPERADMIN".equalsIgnoreCase(role)) {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
             if (!booking.getUserId().equals(user.getId())) {

@@ -5,11 +5,12 @@ import com.nandestech.meetingroom.dto.RoomResponse;
 import com.nandestech.meetingroom.entity.Room;
 import com.nandestech.meetingroom.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class RoomService {
@@ -32,10 +33,10 @@ public class RoomService {
         return toResponse(room);
     }
 
-    public List<RoomResponse> getAllRooms() {
-        return roomRepository.findAll().stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+    public Page<RoomResponse> getAllRooms(int page, int limit) {
+        Pageable pageable = PageRequest.of(page - 1, limit);
+        return roomRepository.findAll(pageable)
+                .map(this::toResponse);
     }
 
     public RoomResponse getRoomById(Long id) {
@@ -67,13 +68,14 @@ public class RoomService {
     }
 
     private void validateAdmin(String role) {
-        if (!"ADMIN".equalsIgnoreCase(role)) {
+        if (!"ADMIN".equalsIgnoreCase(role) && !"SUPERADMIN".equalsIgnoreCase(role)) {
             throw new RuntimeException("Access denied: Only administrators can perform this action");
         }
     }
 
     private RoomResponse toResponse(Room room) {
         return RoomResponse.builder()
+                .id(room.getId())
                 .name(room.getName())
                 .capacity(room.getCapacity())
                 .location(room.getLocation())

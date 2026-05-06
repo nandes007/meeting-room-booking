@@ -10,15 +10,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -144,26 +144,28 @@ public class BookingControllerTest {
     void getAllBookings_AdminSuccess() throws Exception {
         mockUserRole(ADMIN_ROLE);
         BookingResponse response = BookingResponse.builder().id(1L).description("Admin View").build();
-        when(bookingService.getAllBookings(eq(ADMIN_ROLE), eq(USERNAME))).thenReturn(Collections.singletonList(response));
-
+        Page<BookingResponse> page = new PageImpl<>(Collections.singletonList(response));
+        when(bookingService.getAllBookings(eq(ADMIN_ROLE), eq(USERNAME), eq(1), eq(10))).thenReturn(page);
+    
         mockMvc.perform(get("/api/v1/bookings")
                         .header("Authorization", "Bearer " + TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data[0].description").value("Admin View"));
+                .andExpect(jsonPath("$.data.content[0].description").value("Admin View"));
     }
 
     @Test
     void getAllBookings_UserSuccess() throws Exception {
         mockUserRole(USER_ROLE);
         BookingResponse response = BookingResponse.builder().id(1L).description("User View").build();
-        when(bookingService.getAllBookings(eq(USER_ROLE), eq(USERNAME))).thenReturn(Collections.singletonList(response));
-
+        Page<BookingResponse> page = new PageImpl<>(Collections.singletonList(response));
+        when(bookingService.getAllBookings(eq(USER_ROLE), eq(USERNAME), eq(1), eq(10))).thenReturn(page);
+    
         mockMvc.perform(get("/api/v1/bookings")
                         .header("Authorization", "Bearer " + TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data[0].description").value("User View"));
+                .andExpect(jsonPath("$.data.content[0].description").value("User View"));
     }
 
     @Test

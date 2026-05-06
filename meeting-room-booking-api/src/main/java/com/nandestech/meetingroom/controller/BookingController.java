@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,9 +22,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/bookings")
@@ -110,10 +109,12 @@ public class BookingController {
                 """))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    public ResponseEntity<ApiResponse<List<BookingResponse>>> getAllBookings(
+    public ResponseEntity<ApiResponse<Page<BookingResponse>>> getAllBookings(
             @Parameter(hidden = true) @RequestAttribute("X-Username") String username,
-            @Parameter(hidden = true) @RequestAttribute("X-Role") String role) {
-        List<BookingResponse> data = bookingService.getAllBookings(role, username);
+            @Parameter(hidden = true) @RequestAttribute("X-Role") String role,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit) {
+        Page<BookingResponse> data = bookingService.getAllBookings(role, username, page, limit);
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 

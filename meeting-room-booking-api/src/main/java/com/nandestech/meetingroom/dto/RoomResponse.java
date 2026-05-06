@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @Builder
 public class RoomResponse {
 
+    private Long id;
+
     private String name;
 
     private Integer capacity;

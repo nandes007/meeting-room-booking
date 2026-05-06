@@ -10,6 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -17,11 +19,9 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -150,20 +150,20 @@ public class RoomControllerTest {
         RoomResponse response = RoomResponse.builder()
                 .name("Room 1")
                 .build();
-        List<RoomResponse> data = Collections.singletonList(response);
+        Page<RoomResponse> page = new PageImpl<>(Collections.singletonList(response));
 
-        when(roomService.getAllRooms()).thenReturn(data);
+        when(roomService.getAllRooms(eq(1), eq(10))).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/rooms")
                         .header("Authorization", "Bearer " + TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data[0].name").value("Room 1"));
+                .andExpect(jsonPath("$.data.content[0].name").value("Room 1"));
     }
 
     @Test
     void getAllRooms_ServiceError() throws Exception {
-        when(roomService.getAllRooms()).thenThrow(new RuntimeException("Error"));
+        when(roomService.getAllRooms(eq(1), eq(10))).thenThrow(new RuntimeException("Error"));
 
         mockMvc.perform(get("/api/v1/rooms")
                         .header("Authorization", "Bearer " + TOKEN))
