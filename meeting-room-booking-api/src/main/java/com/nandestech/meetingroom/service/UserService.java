@@ -1,5 +1,6 @@
 package com.nandestech.meetingroom.service;
 
+import com.nandestech.meetingroom.dto.UserResponse;
 import com.nandestech.meetingroom.entity.User;
 import com.nandestech.meetingroom.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,5 +35,23 @@ public class UserService {
         }
         
         return userRepository.save(user);
+    }
+
+    public UserResponse getCurrentUser(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("failed to get current user"));
+        return toResponse(user);
+    }
+
+    private UserResponse toResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
     }
 }
