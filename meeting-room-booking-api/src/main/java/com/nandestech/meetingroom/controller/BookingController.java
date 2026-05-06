@@ -92,19 +92,27 @@ public class BookingController {
                             examples = @ExampleObject(value = """
                 {
                     "status": "success",
-                    "data": [
-                        {
-                            "id": 1,
-                            "user_id": 1,
-                            "room_id": 1,
-                            "start_time": "2026-05-10 09:00:00",
-                            "end_time": "2026-05-10 10:00:00",
-                            "status": "pending",
-                            "description": "Sprint Planning Meeting",
-                            "created_at": "2026-05-04 21:00:00",
-                            "updated_at": "2026-05-04 21:00:00"
+                    "data": {
+                        "content": [
+                            {
+                                "id": 1,
+                                "user_id": 1,
+                                "room_id": 1,
+                                "start_time": "2026-05-10 09:00:00",
+                                "end_time": "2026-05-10 10:00:00",
+                                "status": "pending",
+                                "description": "Sprint Planning Meeting",
+                                "created_at": "2026-05-04 21:00:00",
+                                "updated_at": "2026-05-04 21:00:00"
+                            }
+                        ],
+                        "page": {
+                            "size": 10,
+                            "number": 0,
+                            "totalElements": 1,
+                            "totalPages": 1
                         }
-                    ]
+                    }
                 }
                 """))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
@@ -112,8 +120,8 @@ public class BookingController {
     public ResponseEntity<ApiResponse<Page<BookingResponse>>> getAllBookings(
             @Parameter(hidden = true) @RequestAttribute("X-Username") String username,
             @Parameter(hidden = true) @RequestAttribute("X-Role") String role,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int limit) {
+            @Parameter(description = "Page number (1-indexed)", example = "1") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "Items per page", example = "10") @RequestParam(defaultValue = "10") int limit) {
         Page<BookingResponse> data = bookingService.getAllBookings(role, username, page, limit);
         return ResponseEntity.ok(ApiResponse.success(data));
     }

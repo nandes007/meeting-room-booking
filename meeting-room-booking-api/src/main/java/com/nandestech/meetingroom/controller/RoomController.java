@@ -101,16 +101,24 @@ public class RoomController {
                             examples = @ExampleObject(value = """
                 {
                     "status": "success",
-                    "data": [
-                        {
-                            "name": "Meeting Room A",
-                            "capacity": 10,
-                            "location": "Floor 3, Building A",
-                            "is_available": true,
-                            "created_at": "2026-05-04T10:00:00",
-                            "updated_at": "2026-05-04T10:00:00"
+                    "data": {
+                        "content": [
+                            {
+                                "name": "Meeting Room A",
+                                "capacity": 10,
+                                "location": "Floor 3, Building A",
+                                "is_available": true,
+                                "created_at": "2026-05-04T10:00:00",
+                                "updated_at": "2026-05-04T10:00:00"
+                            }
+                        ],
+                        "page": {
+                            "size": 10,
+                            "number": 0,
+                            "totalElements": 1,
+                            "totalPages": 1
                         }
-                    ]
+                    }
                 }
                 """))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
@@ -123,8 +131,8 @@ public class RoomController {
                 """)))
     })
     public ResponseEntity<ApiResponse<Page<RoomResponse>>> getAllRooms(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int limit) {
+            @Parameter(description = "Page number (1-indexed)", example = "1") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "Items per page", example = "10") @RequestParam(defaultValue = "10") int limit) {
         Page<RoomResponse> data = roomService.getAllRooms(page, limit);
         return ResponseEntity.ok(ApiResponse.success(data));
     }
