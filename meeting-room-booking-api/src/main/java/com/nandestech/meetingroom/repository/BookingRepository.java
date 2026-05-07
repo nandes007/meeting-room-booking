@@ -21,4 +21,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Page<Booking> findByUserId(Long userId, Pageable pageable);
     java.util.List<Booking> findByUserId(Long userId);
+    java.util.List<Booking> findByUserIdAndStartTimeBetween(Long userId, LocalDateTime start, LocalDateTime end);
 }

@@ -52,7 +52,10 @@ public class UserService {
     }
 
     private UserResponse toResponse(User user) {
-        List<BookingResponse> bookings = bookingRepository.findByUserId(user.getId())
+        LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime endOfToday = startOfToday.plusDays(1);
+
+        List<BookingResponse> bookings = bookingRepository.findByUserIdAndStartTimeBetween(user.getId(), startOfToday, endOfToday)
                 .stream()
                 .map(this::toBookingResponse)
                 .collect(Collectors.toList());
