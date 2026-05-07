@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import ProfileHeader from '@/components/profile/ProfileHeader.vue';
@@ -21,11 +22,11 @@ const handleLogout = () => {
   router.push('/auth');
 };
 
-const profileInfo = [
-  { label: 'Phone Number', value: authStore.user?.phone, icon: PhoneIcon },
+const profileInfo = computed(() => [
+  { label: 'Username', value: authStore.user?.username, icon: QuestionMarkCircleIcon },
   { label: 'Email Address', value: authStore.user?.email, icon: EnvelopeIcon },
-  { label: 'Birth of Date', value: authStore.user?.birthDate, icon: CakeIcon },
-];
+  { label: 'Account Role', value: authStore.user?.role, icon: ShieldCheckIcon },
+]);
 
 const menuItems = [
   { label: 'Notifications', icon: BellIcon },

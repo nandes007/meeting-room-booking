@@ -9,28 +9,27 @@ const authStore = useAuthStore();
 const bookingStore = useBookingStore();
 
 onMounted(async () => {
-  // Always fetch to ensure we have latest bookings
+  if (!authStore.user) {
+    await authStore.getCurrentUser();
+  }
   await bookingStore.fetchBookings();
 });
 
 const todayKey = computed(() => {
   const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return today.toISOString().split('T')[0];
 });
 
 const todayBookings = computed(() => {
   return bookingStore.getBookingsByDate(todayKey.value);
 });
 
-const firstName = computed(() => authStore.user?.firstName || 'there');
+const displayName = computed(() => authStore.user?.name || 'User');
 </script>
 
 <template>
   <div class="min-h-screen bg-white max-w-2xl mx-auto pb-24 px-4 pt-8">
-    <WelcomeBanner :user-name="firstName" />
+    <WelcomeBanner :user-name="displayName" />
     
     <TodayBookingList 
       :bookings="todayBookings" 

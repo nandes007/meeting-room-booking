@@ -1,54 +1,31 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import AuthTabs from './AuthTabs.vue';
-import PhoneInput from './PhoneInput.vue';
-import EmailInput from './EmailInput.vue';
 import PasswordInput from './PasswordInput.vue';
 import AppButton from '../shared/AppButton.vue';
-import AppDivider from '../shared/AppDivider.vue';
-import SocialLogin from './SocialLogin.vue';
-import { useValidation } from '../../composables/useValidation';
 import { useAuthStore } from '../../stores/authStore';
-import type { InputType } from '../../types/auth';
 
 const emit = defineEmits(['switch-to-register', 'forgot-password', 'success']);
 
 const authStore = useAuthStore();
-const { errors, validateEmail, validatePhone, validatePassword, clearErrors } = useValidation();
 
-const inputType = ref<InputType>('phone');
-const phone = ref('');
-const email = ref('');
+const username = ref('');
 const password = ref('');
 const rememberMe = ref(false);
 
-const inputTypeTabs = [
-  { value: 'phone', label: 'Phone Number' },
-  { value: 'email', label: 'Email' }
-];
-
 const handleSubmit = async () => {
-  clearErrors();
-  
-  if (inputType.value === 'email') {
-    errors.value.email = validateEmail(email.value);
-  } else {
-    errors.value.phone = validatePhone(phone.value);
-  }
-  errors.value.password = validatePassword(password.value);
+  if (!username.value || !password.value) return;
 
-  const hasErrors = Object.values(errors.value).some(err => err !== '');
-  if (hasErrors) return;
+  try {
+    await authStore.login({
+      username: username.value,
+      password: password.value
+    });
 
-  await authStore.login({
-    email: email.value,
-    phone: phone.value,
-    password: password.value,
-    rememberMe: rememberMe.value
-  });
-
-  if (authStore.isAuthenticated) {
-    emit('success');
+    if (authStore.isAuthenticated) {
+      emit('success');
+    }
+  } catch (err) {
+    // Error handled in store
   }
 };
 </script>
@@ -60,23 +37,25 @@ const handleSubmit = async () => {
       <p class="text-sm text-gray-400 mt-1">Login to access your account</p>
     </div>
 
-    <!-- <AuthTabs v-model="inputType" :tabs="inputTypeTabs" /> -->
-
     <form @submit.prevent="handleSubmit" class="flex flex-col gap-5">
-      <!-- <PhoneInput
-        v-if="inputType === 'phone'"
-        v-model="phone"
-        :error="errors.phone"
-      /> -->
-      <EmailInput
-        v-model="email"
-        :error="errors.email"
-      />
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-gray-700">Username</label>
+        <input
+          v-model="username"
+          type="text"
+          placeholder="Enter your username"
+          class="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-gray-200 focus:ring-0 transition-all outline-hidden text-sm"
+          required
+        />
+      </div>
 
       <PasswordInput
         v-model="password"
-        :error="errors.password"
       />
+
+      <div v-if="authStore.error" class="text-red-500 text-sm text-center">
+        {{ authStore.error }}
+      </div>
 
       <div class="flex items-center justify-between">
         <label class="flex items-center gap-2 cursor-pointer">
@@ -87,13 +66,6 @@ const handleSubmit = async () => {
           />
           <span class="text-sm text-gray-600">Remember me</span>
         </label>
-        <button
-          type="button"
-          class="text-sm text-gray-400 hover:text-gray-600"
-          @click="$emit('forgot-password')"
-        >
-          Forgot password?
-        </button>
       </div>
 
       <AppButton
@@ -101,21 +73,6 @@ const handleSubmit = async () => {
         label="Log In"
         :disabled="authStore.isLoading"
       />
-
-      <!-- <AppDivider /> -->
-
-      <!-- <SocialLogin /> -->
-
-      <!-- <p class="text-center text-sm text-gray-400 mt-2">
-        Don't have an account? 
-        <button
-          type="button"
-          class="text-lime font-semibold hover:text-lime-dark cursor-pointer ml-1"
-          @click="$emit('switch-to-register')"
-        >
-          Sign Up
-        </button>
-      </p> -->
     </form>
   </div>
 </template>
