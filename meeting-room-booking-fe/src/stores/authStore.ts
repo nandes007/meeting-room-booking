@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { defineStore } from 'pinia';
 import type { AuthState, User } from '../types/auth';
 import apiClient from '../api/axios';
@@ -37,12 +38,16 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async refreshToken() {
+      console.log('refreshToken called, current refresh_token:', this.refresh_token);
       if (!this.refresh_token) return false;
       
       try {
-        const response = await apiClient.post('/api/v1/auth/refresh', {
+        const refreshUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/v1/auth/refresh`;
+        console.log('Sending refresh request to:', refreshUrl);
+        const response = await axios.post(refreshUrl, {
           refresh_token: this.refresh_token
         });
+        console.log('Refresh response:', response.status, response.data);
         const { access_token, refresh_token } = response.data.data;
         
         this.token = access_token;
