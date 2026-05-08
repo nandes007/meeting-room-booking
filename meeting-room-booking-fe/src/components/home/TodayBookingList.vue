@@ -20,9 +20,15 @@ defineProps<Props>();
       </span>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-lime"></div>
+    <!-- Loading State (Skeleton) -->
+    <div v-if="isLoading" class="flex flex-col gap-3">
+      <div v-for="i in 3" :key="i" class="h-24 bg-gray-50 rounded-3xl animate-pulse relative overflow-hidden">
+        <div class="absolute inset-0 bg-linear-to-r from-transparent via-white/50 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
+        <div class="flex flex-col gap-2 p-4">
+          <div class="h-4 w-3/4 bg-gray-200 rounded-lg"></div>
+          <div class="h-3 w-1/2 bg-gray-100 rounded-lg"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Bookings List -->

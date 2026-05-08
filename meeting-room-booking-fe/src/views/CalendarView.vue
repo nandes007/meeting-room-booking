@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, nextTick } from 'vue';
 import { PlusIcon } from '@heroicons/vue/24/solid';
 import { useCalendar } from '@/composables/useCalendar';
 import { useBookingStore } from '@/stores/bookingStore';
@@ -18,7 +18,8 @@ const {
   selectDate,
   formatDateLabel,
   getDayLabel,
-  formatDateKey
+  formatDateKey,
+  isToday
 } = useCalendar();
 
 const bookingStore = useBookingStore();
@@ -26,9 +27,21 @@ const isModalOpen = ref(false);
 
 onMounted(async () => {
   await bookingStore.fetchBookings();
+  
+  // Wait for DOM to render the list
+  await nextTick();
+  
+  // Automatically scroll to today's date on initialization
+  const today = new Date();
+  const dateKey = formatDateKey(today);
+  const element = document.getElementById(`day-${dateKey}`);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 });
 
 const scheduleData = computed<DayScheduleData[]>(() => {
+  // Use currentWeekDays as the basis for the list to ensure we can always check any day in the current week view
   return currentWeekDays.value.map(date => {
     const dateKey = formatDateKey(date);
     return {
@@ -40,6 +53,15 @@ const scheduleData = computed<DayScheduleData[]>(() => {
   });
 });
 
+const handleDateSelect = (date: Date) => {
+  selectDate(date);
+  const dateKey = formatDateKey(date);
+  const element = document.getElementById(`day-${dateKey}`);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+};
+
 const handleCreateBooking = async (bookingData: any) => {
   const success = await bookingStore.createBooking(bookingData);
   if (success) {
@@ -49,7 +71,7 @@ const handleCreateBooking = async (bookingData: any) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-white max-w-2xl mx-auto pb-24 relative">
+  <div class="min-h-screen bg-white max-w-2xl mx-auto pb-32 relative">
     <!-- Sticky Top Section -->
     <div class="sticky top-0 bg-white/90 backdrop-blur-md z-30 pt-4 pb-2 border-b border-gray-100">
       <CalendarHeader 
@@ -60,30 +82,36 @@ const handleCreateBooking = async (bookingData: any) => {
       <WeekStrip 
         :days="currentWeekDays" 
         :selected-date="currentDate" 
-        @select="selectDate" 
+        @select="handleDateSelect" 
       />
     </div>
 
     <!-- Schedule List -->
     <main class="px-4 mt-2">
-      <div v-if="bookingStore.isLoading && scheduleData.length === 0" class="flex justify-center py-20">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-lime"></div>
+      <div v-if="bookingStore.isLoading && scheduleData.length === 0" class="flex flex-col gap-4 py-10">
+        <div v-for="i in 5" :key="i" class="h-32 bg-gray-50 rounded-3xl animate-pulse"></div>
       </div>
       
-      <div v-else>
+      <div v-else class="flex flex-col gap-6">
         <DaySchedule 
           v-for="(day, index) in scheduleData" 
           :key="day.date.toISOString()" 
           :day-data="day" 
           :index="index"
+          :class="{ 'ring-2 ring-lime ring-offset-4 rounded-3xl transition-all': formatDateKey(day.date) === formatDateKey(currentDate) }"
+          :id="`day-${formatDateKey(day.date)}`"
         />
+        
+        <div v-if="bookingStore.isLoading" class="h-20 flex items-center justify-center">
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-lime"></div>
+        </div>
       </div>
     </main>
 
     <!-- FAB -->
     <button 
       @click="isModalOpen = true"
-      class="fixed bottom-8 right-8 w-14 h-14 bg-lime text-gray-900 rounded-full shadow-lg flex items-center justify-center hover:bg-lime-dark hover:scale-105 transition-all duration-300 z-40 focus:outline-none focus:ring-4 focus:ring-lime/30"
+      class="fixed bottom-24 right-8 w-14 h-14 bg-lime text-gray-900 rounded-full shadow-lg flex items-center justify-center hover:bg-lime-dark hover:scale-105 transition-all duration-300 z-40 focus:outline-none focus:ring-4 focus:ring-lime/30"
       aria-label="Add booking"
     >
       <PlusIcon class="w-8 h-8" />

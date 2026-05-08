@@ -1,13 +1,13 @@
 export interface Booking {
-  id: string;
-  title: string;
-  roomName: string;
-  startTime: string; // HH:mm
-  endTime: string;   // HH:mm
-  date: string;      // YYYY-MM-DD
-  duration: string;  // e.g., "30min"
-  organizer: string;
-  isRecurring?: boolean;
+  id: number;
+  user_id: number;
+  room_id: number;
+  start_time: string;
+  end_time: string;
+  status: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface DayScheduleData {

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import AppInput from '@/components/shared/AppInput.vue';
 import AppButton from '@/components/shared/AppButton.vue';
-import AppDateInput from '@/components/shared/AppDateInput.vue';
+import { useRoomStore } from '@/stores/roomStore';
 
 interface Props {
   isOpen: boolean;
@@ -13,30 +13,53 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'submit']);
 
+const roomStore = useRoomStore();
+
 const form = reactive({
-  title: '',
-  roomName: '',
+  description: '',
+  room_id: null as number | null,
   date: props.selectedDate,
   startTime: '10:00',
   endTime: '11:00',
-  organizer: 'Current User' // Mock
+  status: 'pending'
 });
 
 const isSubmitting = ref(false);
 
+onMounted(() => {
+  roomStore.fetchRooms();
+});
+
+watch(() => props.selectedDate, (newDate) => {
+  form.date = newDate;
+});
+
 const handleSubmit = async () => {
-  isSubmitting.value = true;
-  // Calculate duration string (simplified)
-  const duration = '1h'; 
+  if (!form.room_id) return;
   
-  emit('submit', { ...form, duration });
+  isSubmitting.value = true;
+  
+  // Format to ISO 8601 or backend expected format (e.g. 2026-05-10 09:00:00)
+  // The API docs say date-time, so ISO is usually preferred.
+  // Example in docs: 2026-05-10 09:00:00
+  const start_time = `${form.date} ${form.startTime}:00`;
+  const end_time = `${form.date} ${form.endTime}:00`;
+  
+  emit('submit', {
+    description: form.description,
+    room_id: form.room_id,
+    start_time,
+    end_time,
+    status: form.status
+  });
+  
   isSubmitting.value = false;
   resetForm();
 };
 
 const resetForm = () => {
-  form.title = '';
-  form.roomName = '';
+  form.description = '';
+  form.room_id = null;
   form.startTime = '10:00';
   form.endTime = '11:00';
 };
@@ -66,22 +89,31 @@ const resetForm = () => {
 
           <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
             <AppInput 
-              label="Meeting Title" 
-              v-model="form.title" 
+              label="Meeting Description" 
+              v-model="form.description" 
               placeholder="e.g. Sync Session" 
               required
             />
             
-            <AppInput 
-              label="Room Name" 
-              v-model="form.roomName" 
-              placeholder="e.g. Meeting Room A" 
-              required
-            />
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium text-gray-700">Room</label>
+              <select 
+                v-model="form.room_id"
+                class="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-gray-200 focus:ring-0 transition-all outline-hidden text-sm"
+                required
+              >
+                <option :value="null" disabled>Select a room</option>
+                <option v-for="room in roomStore.rooms" :key="room.id" :value="room.id">
+                  {{ room.name }} (Cap: {{ room.capacity }})
+                </option>
+              </select>
+            </div>
 
-            <AppDateInput 
+            <AppInput 
               label="Date" 
-              v-model="form.date" 
+              v-model="form.date"
+              type="date"
+              required
             />
 
             <div class="grid grid-cols-2 gap-4">

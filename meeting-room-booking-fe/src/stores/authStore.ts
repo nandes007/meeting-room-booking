@@ -1,14 +1,15 @@
 import { defineStore } from 'pinia';
 import type { AuthState, User } from '../types/auth';
+import apiClient from '../api/axios';
 
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
     user: null,
-    token: null,
-    isAuthenticated: false,
+    token: localStorage.getItem('access_token'),
+    refresh_token: localStorage.getItem('refresh_token'),
+    isAuthenticated: !!localStorage.getItem('access_token'),
     isLoading: false,
     error: null,
-    pendingVerificationEmail: null
   }),
 
   actions: {
@@ -16,73 +17,66 @@ export const useAuthStore = defineStore('auth', {
       this.isLoading = true;
       this.error = null;
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const response = await apiClient.post('/api/v1/auth/login', credentials);
+        const { access_token, refresh_token } = response.data.data;
         
-        this.token = 'mock-jwt-token';
-        this.user = {
-          id: '1',
-          firstName: 'John',
-          lastName: 'Doe',
-          email: credentials.email || 'john@example.com',
-          phone: credentials.phone || '+628123456789',
-          birthDate: '1990-01-01'
-        };
+        this.token = access_token;
+        this.refresh_token = refresh_token;
         this.isAuthenticated = true;
+        
+        localStorage.setItem('access_token', access_token);
+        localStorage.setItem('refresh_token', refresh_token);
+        
+        await this.getCurrentUser();
       } catch (err: any) {
-        this.error = err.message || 'Login failed';
+        this.error = err.response?.data?.message || 'Login failed';
+        throw err;
       } finally {
         this.isLoading = false;
       }
     },
 
-    async register(data: any) {
-      this.isLoading = true;
-      this.error = null;
+    async refreshToken() {
+      if (!this.refresh_token) return false;
+      
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const response = await apiClient.post('/api/v1/auth/refresh', {
+          refresh_token: this.refresh_token
+        });
+        const { access_token, refresh_token } = response.data.data;
         
-        this.pendingVerificationEmail = data.email;
-        // Navigation to verify screen handled by component
-      } catch (err: any) {
-        this.error = err.message || 'Registration failed';
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
-    async verifyOtp(code: string) {
-      this.isLoading = true;
-      this.error = null;
-      try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        this.token = access_token;
+        this.refresh_token = refresh_token;
         
-        if (code === '1234') {
-          this.isAuthenticated = true;
-          this.token = 'mock-jwt-token-after-otp';
-          return true;
-        } else {
-          throw new Error('Invalid verification code');
-        }
-      } catch (err: any) {
-        this.error = err.message || 'Verification failed';
+        localStorage.setItem('access_token', access_token);
+        localStorage.setItem('refresh_token', refresh_token);
+        
+        return true;
+      } catch (err) {
+        this.logout();
         return false;
-      } finally {
-        this.isLoading = false;
       }
     },
 
-    async resendOtp() {
-      console.log('Resending OTP...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    async getCurrentUser() {
+      try {
+        const response = await apiClient.get('/api/v1/users/current');
+        this.user = response.data.data;
+      } catch (err: any) {
+        console.error('Failed to fetch current user', err);
+        if (err.response?.status === 401) {
+          this.logout();
+        }
+      }
     },
 
     logout() {
       this.user = null;
       this.token = null;
+      this.refresh_token = null;
       this.isAuthenticated = false;
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
     }
   }
 });

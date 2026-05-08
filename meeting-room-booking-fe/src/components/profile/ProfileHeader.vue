@@ -9,13 +9,12 @@ interface Props {
 const props = defineProps<Props>();
 
 const initials = computed(() => {
-  if (!props.user) return '??';
-  return `${props.user.firstName[0]}${props.user.lastName[0]}`.toUpperCase();
+  if (!props.user?.name) return '??';
+  return props.user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 });
 
 const fullName = computed(() => {
-  if (!props.user) return 'Guest User';
-  return `${props.user.firstName} ${props.user.lastName}`;
+  return props.user?.name || 'Guest User';
 });
 </script>
 

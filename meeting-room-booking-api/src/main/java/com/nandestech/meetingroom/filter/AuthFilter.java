@@ -37,7 +37,9 @@ public class AuthFilter implements Filter {
         String path = httpRequest.getRequestURI();
 
         // Skip auth for login, refresh, and swagger endpoints
-        if (path.startsWith("/api/v1/auth")
+        // Also skip OPTIONS requests for CORS preflight
+        if (httpRequest.getMethod().equalsIgnoreCase("OPTIONS")
+                || path.startsWith("/api/v1/auth")
                 || path.startsWith("/swagger-ui")
                 || path.startsWith("/v3/api-docs")) {
             chain.doFilter(request, response);
