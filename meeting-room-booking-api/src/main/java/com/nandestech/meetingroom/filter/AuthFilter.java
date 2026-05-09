@@ -61,6 +61,16 @@ public class AuthFilter implements Filter {
             
             httpRequest.setAttribute("X-Username", username);
             httpRequest.setAttribute("X-Role", user.getRole());
+
+            // Enforce SUPERADMIN role for user management endpoints
+            // /api/v1/users/current is accessible by any authenticated user
+            if (path.startsWith("/api/v1/users") && !path.equals("/api/v1/users/current")) {
+                if (!"SUPERADMIN".equals(user.getRole())) {
+                    sendUnauthorizedResponse(httpResponse);
+                    return;
+                }
+            }
+
             chain.doFilter(request, response);
         } catch (RuntimeException e) {
             sendUnauthorizedResponse(httpResponse);
