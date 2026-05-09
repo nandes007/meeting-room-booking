@@ -1,6 +1,7 @@
 package com.nandestech.meetingroom.service;
 
 import com.nandestech.meetingroom.dto.BookingResponse;
+import com.nandestech.meetingroom.dto.UserRequest;
 import com.nandestech.meetingroom.dto.UserResponse;
 import com.nandestech.meetingroom.entity.Booking;
 import com.nandestech.meetingroom.entity.User;
@@ -25,30 +26,71 @@ public class UserService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public User createUser(User user) {
-        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            throw new RuntimeException("Username already exists");
+    public UserResponse createUser(UserRequest request) {
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new RuntimeException("failed to create user");
         }
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
-        }
-        
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        
-        if (user.getCreatedAt() == null) {
-            user.setCreatedAt(LocalDateTime.now());
-        }
-        if (user.getUpdatedAt() == null) {
-            user.setUpdatedAt(LocalDateTime.now());
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("failed to create user");
         }
         
-        return userRepository.save(user);
+        User user = new User();
+        user.setName(request.getName());
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole("EMPLOYEE");
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        
+        return toManagementResponse(userRepository.save(user));
+    }
+
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::toManagementResponse)
+                .collect(Collectors.toList());
+    }
+
+    public UserResponse getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("failed to get user"));
+        return toManagementResponse(user);
+    }
+
+    public UserResponse updateUser(Long id, UserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("failed to update user"));
+        
+        if (request.getName() != null) user.setName(request.getName());
+        if (request.getUsername() != null) user.setUsername(request.getUsername());
+        if (request.getEmail() != null) user.setEmail(request.getEmail());
+        
+        user.setUpdatedAt(LocalDateTime.now());
+        return toManagementResponse(userRepository.save(user));
+    }
+
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("failed to delete user"));
+        userRepository.delete(user);
     }
 
     public UserResponse getCurrentUser(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("failed to get current user"));
         return toResponse(user);
+    }
+
+    private UserResponse toManagementResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
     }
 
     private UserResponse toResponse(User user) {
