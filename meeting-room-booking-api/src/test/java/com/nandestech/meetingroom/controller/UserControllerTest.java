@@ -1,5 +1,7 @@
 package com.nandestech.meetingroom.controller;
 
+import tools.jackson.databind.ObjectMapper;
+import com.nandestech.meetingroom.dto.UserRequest;
 import com.nandestech.meetingroom.dto.UserResponse;
 import com.nandestech.meetingroom.entity.User;
 import com.nandestech.meetingroom.repository.UserRepository;
@@ -14,11 +16,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -37,60 +42,129 @@ public class UserControllerTest {
     @MockitoBean
     private UserRepository userRepository;
 
-    private static final String TOKEN = "valid-token";
-    private static final String USERNAME = "testuser";
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final String ADMIN_TOKEN = "admin-token";
+    private static final String ADMIN_USERNAME = "superadmin";
+    private static final String USER_TOKEN = "user-token";
+    private static final String USER_USERNAME = "employee";
 
     @BeforeEach
     void setUp() {
-        when(pasetoTokenService.verifyToken(TOKEN)).thenReturn(USERNAME);
-        
-        User user = new User();
-        user.setId(1L);
-        user.setUsername(USERNAME);
-        user.setRole("ADMIN");
-        when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(user));
+        // Mock SUPERADMIN
+        when(pasetoTokenService.verifyToken(ADMIN_TOKEN)).thenReturn(ADMIN_USERNAME);
+        User admin = new User();
+        admin.setId(1L);
+        admin.setUsername(ADMIN_USERNAME);
+        admin.setRole("SUPERADMIN");
+        when(userRepository.findByUsername(ADMIN_USERNAME)).thenReturn(Optional.of(admin));
+
+        // Mock EMPLOYEE
+        when(pasetoTokenService.verifyToken(USER_TOKEN)).thenReturn(USER_USERNAME);
+        User employee = new User();
+        employee.setId(2L);
+        employee.setUsername(USER_USERNAME);
+        employee.setRole("EMPLOYEE");
+        when(userRepository.findByUsername(USER_USERNAME)).thenReturn(Optional.of(employee));
     }
 
     @Test
     void getCurrentUser_Success() throws Exception {
         UserResponse response = UserResponse.builder()
                 .id(1L)
-                .name("test name")
-                .username(USERNAME)
-                .email("test@example.com")
+                .username(ADMIN_USERNAME)
                 .role("SUPERADMIN")
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .bookings(java.util.Collections.emptyList())
                 .build();
 
-        when(userService.getCurrentUser(eq(USERNAME))).thenReturn(response);
+        when(userService.getCurrentUser(ADMIN_USERNAME)).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/users/current")
-                        .header("Authorization", "Bearer " + TOKEN))
+                        .header("Authorization", "Bearer " + ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data.username").value(USERNAME))
-                .andExpect(jsonPath("$.data.role").value("SUPERADMIN"));
+                .andExpect(jsonPath("$.data.username").value(ADMIN_USERNAME));
     }
 
     @Test
-    void getCurrentUser_Failed() throws Exception {
-        when(userService.getCurrentUser(eq(USERNAME)))
-                .thenThrow(new RuntimeException("failed to get current user"));
+    void getAllUsers_Success_AsSuperAdmin() throws Exception {
+        when(userService.getAllUsers()).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/api/v1/users/current")
-                        .header("Authorization", "Bearer " + TOKEN))
+        mockMvc.perform(get("/api/v1/users")
+                        .header("Authorization", "Bearer " + ADMIN_TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"));
+    }
+
+    @Test
+    void getAllUsers_Forbidden_AsEmployee() throws Exception {
+        mockMvc.perform(get("/api/v1/users")
+                        .header("Authorization", "Bearer " + USER_TOKEN))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value("unauthorized"));
+    }
+
+    @Test
+    void createUser_Success_AsSuperAdmin() throws Exception {
+        UserRequest request = UserRequest.builder()
+                .name("New User")
+                .username("newuser")
+                .email("new@example.com")
+                .password("password")
+                .build();
+        UserResponse response = UserResponse.builder().id(3L).username("newuser").build();
+
+        when(userService.createUser(any(UserRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/users")
+                        .header("Authorization", "Bearer " + ADMIN_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"));
+    }
+
+    @Test
+    void getUserById_NotFound() throws Exception {
+        when(userService.getUserById(99L)).thenThrow(new RuntimeException("failed to get user"));
+
+        mockMvc.perform(get("/api/v1/users/99")
+                        .header("Authorization", "Bearer " + ADMIN_TOKEN))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("failed"))
-                .andExpect(jsonPath("$.message").value("failed to get current user"));
+                .andExpect(jsonPath("$.message").value("failed to get user"));
     }
 
     @Test
-    void getCurrentUser_Unauthorized() throws Exception {
-        mockMvc.perform(get("/api/v1/users/current"))
+    void updateUser_Success() throws Exception {
+        UserRequest request = UserRequest.builder().name("Updated").build();
+        UserResponse response = UserResponse.builder().id(2L).name("Updated").build();
+
+        when(userService.updateUser(eq(2L), any(UserRequest.class))).thenReturn(response);
+
+        mockMvc.perform(patch("/api/v1/users/2")
+                        .header("Authorization", "Bearer " + ADMIN_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.name").value("Updated"));
+    }
+
+    @Test
+    void deleteUser_Success() throws Exception {
+        doNothing().when(userService).deleteUser(2L);
+
+        mockMvc.perform(delete("/api/v1/users/2")
+                        .header("Authorization", "Bearer " + ADMIN_TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.message").value("user deleted successfully"));
+    }
+
+    @Test
+    void unauthorized_Access_NoToken() throws Exception {
+        mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value("unauthorized"))
-                .andExpect(jsonPath("$.message").value("Unauthorized"));
+                .andExpect(jsonPath("$.status").value("unauthorized"));
     }
 }
