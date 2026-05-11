@@ -10,6 +10,8 @@ import com.nandestech.meetingroom.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -87,12 +89,20 @@ public class UserControllerTest {
 
     @Test
     void getAllUsers_Success_AsSuperAdmin() throws Exception {
-        when(userService.getAllUsers()).thenReturn(Collections.emptyList());
+        UserResponse userResponse = UserResponse.builder()
+                .id(1L)
+                .username(ADMIN_USERNAME)
+                .build();
+        Page<UserResponse> userPage = new PageImpl<>(Collections.singletonList(userResponse));
+        
+        when(userService.getAllUsers(1, 10)).thenReturn(userPage);
 
         mockMvc.perform(get("/api/v1/users")
                         .header("Authorization", "Bearer " + ADMIN_TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("success"));
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.content[0].username").value(ADMIN_USERNAME))
+                .andExpect(jsonPath("$.data.page.totalElements").value(1));
     }
 
     @Test

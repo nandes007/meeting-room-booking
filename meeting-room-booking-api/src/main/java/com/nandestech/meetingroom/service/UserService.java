@@ -8,6 +8,9 @@ import com.nandestech.meetingroom.entity.User;
 import com.nandestech.meetingroom.repository.BookingRepository;
 import com.nandestech.meetingroom.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -46,10 +49,10 @@ public class UserService {
         return toManagementResponse(userRepository.save(user));
     }
 
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(this::toManagementResponse)
-                .collect(Collectors.toList());
+    public Page<UserResponse> getAllUsers(int page, int limit) {
+        Pageable pageable = PageRequest.of(page - 1, limit);
+        return userRepository.findAll(pageable)
+                .map(this::toManagementResponse);
     }
 
     public UserResponse getUserById(Long id) {
