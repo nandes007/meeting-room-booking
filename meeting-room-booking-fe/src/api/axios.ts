@@ -73,13 +73,13 @@ apiClient.interceptors.response.use(
               resolve(apiClient(originalRequest));
             } else {
               processQueue(new Error('Refresh failed'), null);
-              authStore.logout();
+              authStore.logout('Session expired. Please login again.');
               reject(error);
             }
           })
           .catch((err) => {
             processQueue(err, null);
-            authStore.logout();
+            authStore.logout('Session expired. Please login again.');
             reject(err);
           })
           .finally(() => {

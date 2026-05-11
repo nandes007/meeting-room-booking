@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
 import { 
   HomeIcon as HomeOutline, 
   CalendarDaysIcon as CalendarOutline, 
@@ -16,7 +17,9 @@ import {
 
 const route = useRoute();
 
-const navItems = [
+const authStore = useAuthStore();
+
+const allNavItems = [
   { 
     label: 'Home', 
     path: '/', 
@@ -33,7 +36,8 @@ const navItems = [
     label: 'Users', 
     path: '/users', 
     outlineIcon: UsersOutline, 
-    solidIcon: UsersSolid 
+    solidIcon: UsersSolid,
+    roles: ['SUPERADMIN']
   },
   { 
     label: 'Profile', 
@@ -42,6 +46,13 @@ const navItems = [
     solidIcon: UserSolid 
   }
 ];
+
+const navItems = computed(() => {
+  return allNavItems.filter(item => {
+    if (!item.roles) return true;
+    return item.roles.includes(authStore.user?.role || '');
+  });
+});
 
 const isActive = (path: string) => {
   if (path === '/' && route.path === '/') return true;

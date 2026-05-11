@@ -32,7 +32,7 @@ const router = createRouter({
       path: '/users',
       name: 'users',
       component: () => import('../views/UsersView.vue'),
-      meta: { auth: true }
+      meta: { auth: true, roles: ['SUPERADMIN'] }
     },
     {
       path: '/profile',
@@ -49,6 +49,8 @@ router.beforeEach((to, from, next) => {
   if (to.meta.auth && !authStore.isAuthenticated) {
     next('/auth')
   } else if (to.meta.guest && authStore.isAuthenticated) {
+    next('/')
+  } else if (to.meta.roles && Array.isArray(to.meta.roles) && !to.meta.roles.includes(authStore.user?.role)) {
     next('/')
   } else {
     next()

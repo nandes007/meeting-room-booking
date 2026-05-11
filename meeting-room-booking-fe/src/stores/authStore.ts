@@ -2,6 +2,7 @@ import axios from 'axios';
 import { defineStore } from 'pinia';
 import type { AuthState, User } from '../types/auth';
 import apiClient from '../api/axios';
+import router from '../router';
 
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
@@ -75,13 +76,16 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    logout() {
+    logout(errorMessage?: string) {
       this.user = null;
       this.token = null;
       this.refresh_token = null;
       this.isAuthenticated = false;
+      this.error = errorMessage || null;
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      
+      router.push('/auth');
     }
   }
 });
