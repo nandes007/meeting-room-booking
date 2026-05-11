@@ -3,6 +3,7 @@ interface Props {
   label: string;
   variant?: 'primary' | 'outline' | 'social';
   disabled?: boolean;
+  isLoading?: boolean;
   fullWidth?: boolean;
   type?: 'button' | 'submit' | 'reset';
 }
@@ -10,6 +11,7 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   variant: 'primary',
   disabled: false,
+  isLoading: false,
   fullWidth: true,
   type: 'button'
 });
@@ -20,8 +22,8 @@ defineEmits(['click']);
 <template>
   <button
     :type="type"
-    :disabled="disabled"
-    class="flex items-center justify-center gap-2 py-3 px-4 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+    :disabled="disabled || isLoading"
+    class="flex items-center justify-center gap-2 py-3 px-4 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed relative"
     :class="[
       variant === 'primary' ? 'bg-lime text-gray-900 font-semibold rounded-3xl hover:bg-lime-dark' : '',
       variant === 'outline' ? 'bg-white border border-gray-200 text-gray-700 font-medium rounded-3xl hover:bg-gray-50' : '',
@@ -30,7 +32,13 @@ defineEmits(['click']);
     ]"
     @click="$emit('click')"
   >
-    <slot name="icon" />
-    <span>{{ label }}</span>
+    <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-inherit rounded-inherit">
+      <div class="w-5 h-5 border-2 border-gray-900/30 border-t-gray-900 rounded-full animate-spin"></div>
+    </div>
+
+    <div class="flex items-center gap-2" :class="{ 'opacity-0': isLoading }">
+      <slot name="icon" />
+      <span>{{ label }}</span>
+    </div>
   </button>
 </template>

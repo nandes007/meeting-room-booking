@@ -5,6 +5,8 @@ import AppInput from '@/components/shared/AppInput.vue';
 import AppButton from '@/components/shared/AppButton.vue';
 import AppSelect from '@/components/shared/AppSelect.vue';
 import { useRoomStore } from '@/stores/roomStore';
+import { useBookingStore } from '@/stores/bookingStore';
+import { ExclamationCircleIcon } from '@heroicons/vue/24/outline';
 
 interface Props {
   isOpen: boolean;
@@ -15,6 +17,7 @@ const props = defineProps<Props>();
 const emit = defineEmits(['close', 'submit']);
 
 const roomStore = useRoomStore();
+const bookingStore = useBookingStore();
 
 const form = reactive({
   description: '',
@@ -29,33 +32,46 @@ const isSubmitting = ref(false);
 
 onMounted(() => {
   roomStore.fetchRooms();
+  bookingStore.clearError();
+});
+
+watch(() => props.isOpen, (newVal) => {
+  if (newVal) {
+    bookingStore.clearError();
+  }
 });
 
 watch(() => props.selectedDate, (newDate) => {
   form.date = newDate;
 });
 
+watch(() => form, () => {
+  if (bookingStore.error) {
+    bookingStore.clearError();
+  }
+}, { deep: true });
+
 const handleSubmit = async () => {
   if (!form.room_id) return;
   
   isSubmitting.value = true;
   
-  // Format to ISO 8601 or backend expected format (e.g. 2026-05-10 09:00:00)
-  // The API docs say date-time, so ISO is usually preferred.
-  // Example in docs: 2026-05-10 09:00:00
-  const start_time = `${form.date} ${form.startTime}:00`;
-  const end_time = `${form.date} ${form.endTime}:00`;
-  
-  emit('submit', {
+  const bookingData = {
     description: form.description,
     room_id: form.room_id,
-    start_time,
-    end_time,
+    start_time: `${form.date} ${form.startTime}:00`,
+    end_time: `${form.date} ${form.endTime}:00`,
     status: form.status
-  });
+  };
+
+  const success = await bookingStore.createBooking(bookingData);
+  
+  if (success) {
+    emit('close');
+    resetForm();
+  }
   
   isSubmitting.value = false;
-  resetForm();
 };
 
 const resetForm = () => {
@@ -87,6 +103,19 @@ const resetForm = () => {
               <XMarkIcon class="w-6 h-6" />
             </button>
           </div>
+
+          <!-- Error Message -->
+          <Transition name="slide-down">
+            <div v-if="bookingStore.error" class="mb-6 p-4 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4 animate-shake">
+              <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <ExclamationCircleIcon class="w-6 h-6 text-red-600" />
+              </div>
+              <div class="flex flex-col gap-0.5 pt-0.5">
+                <span class="text-sm font-bold text-red-900">Oops! Something went wrong</span>
+                <p class="text-sm text-red-600 leading-relaxed">{{ bookingStore.error }}</p>
+              </div>
+            </div>
+          </Transition>
 
           <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
             <AppInput 
@@ -135,7 +164,7 @@ const resetForm = () => {
               <AppButton 
                 label="Create Booking" 
                 type="submit" 
-                :disabled="isSubmitting"
+                :is-loading="isSubmitting"
               />
             </div>
           </form>
@@ -164,5 +193,31 @@ const resetForm = () => {
 
 .zoom-in {
   animation-name: zoom-in;
+}
+
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-down-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

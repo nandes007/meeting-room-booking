@@ -62,12 +62,6 @@ const handleDateSelect = (date: Date) => {
   }
 };
 
-const handleCreateBooking = async (bookingData: any) => {
-  const success = await bookingStore.createBooking(bookingData);
-  if (success) {
-    isModalOpen.value = false;
-  }
-};
 </script>
 
 <template>
@@ -122,7 +116,6 @@ const handleCreateBooking = async (bookingData: any) => {
       :is-open="isModalOpen" 
       :selected-date="formatDateKey(currentDate)" 
       @close="isModalOpen = false" 
-      @submit="handleCreateBooking"
     />
   </div>
 </template>

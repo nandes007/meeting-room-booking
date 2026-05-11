@@ -62,6 +62,10 @@ export const useBookingStore = defineStore('booking', {
       }
     },
 
+    clearError() {
+      this.error = null;
+    },
+
     getBookingsByDate(date: string) {
       // date format from calendar is likely YYYY-MM-DD
       // start_time in API is 2026-05-10 09:00:00 or ISO
