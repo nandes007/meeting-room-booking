@@ -13,6 +13,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -87,13 +91,14 @@ public class UserServiceTest {
 
     @Test
     void getAllUsers_Success() {
-        when(userRepository.findAll()).thenReturn(List.of(user));
+        Page<User> userPage = new PageImpl<>(List.of(user));
+        when(userRepository.findAll(any(Pageable.class))).thenReturn(userPage);
 
-        List<UserResponse> responses = userService.getAllUsers();
+        Page<UserResponse> responses = userService.getAllUsers(1, 10);
 
-        assertEquals(1, responses.size());
-        assertEquals(USERNAME, responses.get(0).getUsername());
-        assertNull(responses.get(0).getRole()); // Should be excluded in management response
+        assertEquals(1, responses.getTotalElements());
+        assertEquals(USERNAME, responses.getContent().get(0).getUsername());
+        assertNull(responses.getContent().get(0).getRole()); // Should be excluded in management response
     }
 
     @Test

@@ -20,6 +20,68 @@ tags:
   description: CRUD operations for room bookings. Admin can manage all; users can
     create and cancel their own.
 paths:
+  /api/v1/users:
+    get:
+      tags:
+      - User Management
+      summary: Get all users
+      description: Retrieve a list of all users. Access restricted to SUPERADMIN.
+      operationId: getAllUsers
+      responses:
+        "200":
+          description: Users retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListUserResponse"
+        "400":
+          description: Failed to retrieve users
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListUserResponse"
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListUserResponse"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - User Management
+      summary: Create a new user
+      description: Register a new user. Role defaults to EMPLOYEE. Access restricted
+        to SUPERADMIN.
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequest"
+        required: true
+      responses:
+        "200":
+          description: User created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserResponse"
+        "400":
+          description: Failed to create user
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserResponse"
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserResponse"
+      security:
+      - bearerAuth: []
   /api/v1/rooms:
     get:
       tags:
@@ -286,6 +348,115 @@ paths:
               example:
                 status: failed
                 message: Invalid username or password
+  /api/v1/users/{id}:
+    get:
+      tags:
+      - User Management
+      summary: Get user by ID
+      description: Retrieve user details by their ID. Access restricted to SUPERADMIN.
+      operationId: getUserById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: User retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserResponse"
+        "400":
+          description: Failed to retrieve user
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserResponse"
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserResponse"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - User Management
+      summary: Delete user
+      description: Delete user by their ID. Access restricted to SUPERADMIN.
+      operationId: deleteUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: User deleted successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
+        "400":
+          description: Failed to delete user
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
+      security:
+      - bearerAuth: []
+    patch:
+      tags:
+      - User Management
+      summary: Update user
+      description: Update user details by their ID. Access restricted to SUPERADMIN.
+      operationId: updateUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequest"
+        required: true
+      responses:
+        "200":
+          description: User updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserResponse"
+        "400":
+          description: Failed to update user
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserResponse"
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserResponse"
+      security:
+      - bearerAuth: []
   /api/v1/rooms/{id}:
     get:
       tags:
@@ -609,8 +780,82 @@ paths:
               example:
                 status: unauthorized
                 message: Unauthorized
+      security:
+      - bearerAuth: []
 components:
   schemas:
+    UserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+    ApiResponseUserResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          $ref: "#/components/schemas/UserResponse"
+        message:
+          type: string
+    BookingResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        status:
+          type: string
+        description:
+          type: string
+        user_id:
+          type: integer
+          format: int64
+        room_id:
+          type: integer
+          format: int64
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        bookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/BookingResponse"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     RoomRequest:
       type: object
       properties:
@@ -711,34 +956,17 @@ components:
           $ref: "#/components/schemas/BookingResponse"
         message:
           type: string
-    BookingResponse:
+    ApiResponseListUserResponse:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
         status:
           type: string
-        description:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserResponse"
+        message:
           type: string
-        user_id:
-          type: integer
-          format: int64
-        room_id:
-          type: integer
-          format: int64
-        start_time:
-          type: string
-          format: date-time
-        end_time:
-          type: string
-          format: date-time
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
     ApiResponsePageBookingResponse:
       type: object
       properties:
@@ -757,27 +985,27 @@ components:
         totalPages:
           type: integer
           format: int32
-        pageable:
-          $ref: "#/components/schemas/PageableObject"
-        size:
+        numberOfElements:
           type: integer
           format: int32
-        content:
-          type: array
-          items:
-            $ref: "#/components/schemas/BookingResponse"
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
         number:
+          type: integer
+          format: int32
+        size:
           type: integer
           format: int32
         sort:
           $ref: "#/components/schemas/SortObject"
-        numberOfElements:
-          type: integer
-          format: int32
         first:
           type: boolean
         last:
           type: boolean
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/BookingResponse"
         empty:
           type: boolean
     PageableObject:
@@ -791,22 +1019,31 @@ components:
         pageSize:
           type: integer
           format: int32
+        unpaged:
+          type: boolean
+        sort:
+          $ref: "#/components/schemas/SortObject"
         offset:
           type: integer
           format: int64
-        sort:
-          $ref: "#/components/schemas/SortObject"
-        unpaged:
-          type: boolean
     SortObject:
       type: object
       properties:
         sorted:
           type: boolean
-        empty:
-          type: boolean
         unsorted:
           type: boolean
+        empty:
+          type: boolean
+    ApiResponseString:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: string
+        message:
+          type: string
     ApiResponseVoid:
       type: object
       properties:
