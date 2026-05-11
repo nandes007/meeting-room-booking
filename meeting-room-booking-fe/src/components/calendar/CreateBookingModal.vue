@@ -3,6 +3,7 @@ import { ref, reactive, onMounted, watch } from 'vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import AppInput from '@/components/shared/AppInput.vue';
 import AppButton from '@/components/shared/AppButton.vue';
+import AppSelect from '@/components/shared/AppSelect.vue';
 import { useRoomStore } from '@/stores/roomStore';
 
 interface Props {
@@ -95,19 +96,13 @@ const resetForm = () => {
               required
             />
             
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium text-gray-700">Room</label>
-              <select 
-                v-model="form.room_id"
-                class="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-gray-200 focus:ring-0 transition-all outline-hidden text-sm"
-                required
-              >
-                <option :value="null" disabled>Select a room</option>
-                <option v-for="room in roomStore.rooms" :key="room.id" :value="room.id">
-                  {{ room.name }} (Cap: {{ room.capacity }})
-                </option>
-              </select>
-            </div>
+            <AppSelect 
+              label="Room"
+              v-model="form.room_id"
+              :options="roomStore.rooms"
+              placeholder="Select a room"
+              required
+            />
 
             <AppInput 
               label="Date" 
