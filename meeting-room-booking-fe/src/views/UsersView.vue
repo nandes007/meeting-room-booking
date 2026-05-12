@@ -16,7 +16,7 @@ onMounted(async () => {
   await userStore.fetchUsers();
   
   observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && userStore.hasMore && !userStore.isLoading) {
+    if (entries[0]?.isIntersecting && userStore.hasMore && !userStore.isLoading) {
       userStore.fetchMoreUsers();
     }
   }, { threshold: 0.1 });
@@ -48,80 +48,78 @@ const confirmDelete = async (user: User) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50/50 pb-20">
-    <header class="sticky top-0 bg-white/80 backdrop-blur-md z-30 border-b border-gray-100 px-6 py-6 flex items-center justify-between">
+  <div class="min-h-screen bg-white max-w-2xl mx-auto pb-24 px-4 pt-8">
+    <div class="flex items-center justify-between mb-6 px-1">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 font-display">Users</h1>
-        <p class="text-gray-500 text-sm mt-1">Manage team members and roles</p>
+        <h1 class="text-2xl font-bold text-gray-900 font-display">Users</h1>
+        <p class="text-gray-400 text-sm mt-0.5">Manage team members</p>
       </div>
       <button 
         @click="openCreateModal"
-        class="bg-lime text-gray-900 px-6 py-3 rounded-2xl font-bold hover:bg-lime-dark hover:scale-105 transition-all duration-300 flex items-center gap-2 shadow-lg shadow-lime/20"
+        class="bg-lime text-gray-900 px-5 py-2.5 rounded-2xl font-bold text-sm hover:bg-lime-dark transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
       >
-        <PlusIcon class="w-5 h-5" />
-        New User
+        <PlusIcon class="w-4 h-4" />
+        Add
       </button>
-    </header>
+    </div>
 
-    <main class="max-w-4xl mx-auto p-6">
-      <div v-if="userStore.users.length > 0" class="flex flex-col gap-4">
-        <div 
-          v-for="user in userStore.users" 
-          :key="user.id"
-          class="bg-white p-5 rounded-3xl border border-gray-100 flex items-center justify-between group hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300"
-        >
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-lime/10 flex items-center justify-center text-lime-dark group-hover:bg-lime group-hover:text-gray-900 transition-all duration-500">
-              <UserIcon class="w-6 h-6" />
-            </div>
-            <div class="flex flex-col">
-              <span class="text-lg font-bold text-gray-900">{{ user.name }}</span>
-              <div class="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
-                <span class="bg-gray-100 px-2 py-0.5 rounded-lg font-medium text-[11px] uppercase tracking-wider">{{ user.role }}</span>
-                <span class="w-1 h-1 rounded-full bg-gray-300"></span>
-                <span>{{ user.email }}</span>
-              </div>
+    <div v-if="userStore.users.length > 0" class="flex flex-col gap-4">
+      <div 
+        v-for="user in userStore.users" 
+        :key="user.id"
+        class="bg-white p-4 rounded-3xl border border-gray-100 flex items-center justify-between group hover:shadow-lg hover:shadow-gray-100/50 transition-all duration-300"
+      >
+        <div class="flex items-center gap-4 min-w-0">
+          <div class="w-12 h-12 rounded-2xl bg-lime/10 flex items-center justify-center text-lime-dark group-hover:bg-lime group-hover:text-gray-900 transition-all duration-500 shrink-0">
+            <UserIcon class="w-6 h-6" />
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-lg font-bold text-gray-900 truncate">{{ user.name }}</span>
+            <div class="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
+              <span class="bg-gray-100 px-2 py-0.5 rounded-lg font-medium text-[10px] uppercase tracking-wider shrink-0 text-gray-400">{{ user.role }}</span>
+              <span class="w-1 h-1 rounded-full bg-gray-200 shrink-0"></span>
+              <span class="truncate text-xs">{{ user.email }}</span>
             </div>
           </div>
-
-          <div class="flex items-center gap-2">
-            <button 
-              @click="openEditModal(user)"
-              class="p-2.5 rounded-xl hover:bg-gray-50 text-gray-400 hover:text-gray-900 transition-all"
-              title="Edit User"
-            >
-              <PencilSquareIcon class="w-5 h-5" />
-            </button>
-            <button 
-              @click="confirmDelete(user)"
-              class="p-2.5 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all"
-              title="Delete User"
-            >
-              <TrashIcon class="w-5 h-5" />
-            </button>
-          </div>
         </div>
 
-        <div ref="loader" class="h-20 flex items-center justify-center">
-          <div v-if="userStore.isLoading" class="animate-spin rounded-full h-8 w-8 border-b-2 border-lime"></div>
-          <span v-else-if="!userStore.hasMore" class="text-sm text-gray-400 font-medium italic">End of list</span>
+        <div class="flex items-center gap-1">
+          <button 
+            @click="openEditModal(user)"
+            class="p-3 rounded-2xl hover:bg-gray-50 text-gray-400 hover:text-gray-900 transition-all"
+            title="Edit User"
+          >
+            <PencilSquareIcon class="w-5 h-5" />
+          </button>
+          <button 
+            @click="confirmDelete(user)"
+            class="p-3 rounded-2xl hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all"
+            title="Delete User"
+          >
+            <TrashIcon class="w-5 h-5" />
+          </button>
         </div>
       </div>
 
-      <div v-else-if="userStore.isLoading" class="flex flex-col gap-4">
-        <div v-for="i in 5" :key="i" class="h-24 bg-white rounded-3xl animate-pulse border border-gray-100"></div>
+      <div ref="loader" class="h-16 flex items-center justify-center">
+        <div v-if="userStore.isLoading" class="animate-spin rounded-full h-6 w-6 border-b-2 border-lime"></div>
+        <span v-else-if="!userStore.hasMore" class="text-sm text-gray-400 font-medium italic">End of list</span>
       </div>
+    </div>
 
-      <div v-else class="py-20 flex flex-col items-center justify-center text-center gap-4">
-        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-300">
-          <UserIcon class="w-10 h-10" />
-        </div>
-        <div>
-          <h3 class="text-xl font-bold text-gray-900">No users found</h3>
-          <p class="text-gray-500 mt-1">Start by adding a new member to the team</p>
-        </div>
+    <div v-else-if="userStore.isLoading" class="flex flex-col gap-4">
+      <div v-for="i in 5" :key="i" class="h-24 bg-gray-50 rounded-3xl animate-pulse border border-gray-100"></div>
+    </div>
+
+    <div v-else class="py-20 flex flex-col items-center justify-center text-center gap-4">
+      <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-300">
+        <UserIcon class="w-10 h-10" />
       </div>
-    </main>
+      <div>
+        <h3 class="text-xl font-bold text-gray-900">No users found</h3>
+        <p class="text-gray-500 mt-1">Start by adding a new member to the team</p>
+      </div>
+    </div>
 
     <UserFormModal 
       :is-open="isModalOpen" 
