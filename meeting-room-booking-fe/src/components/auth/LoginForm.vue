@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { ExclamationCircleIcon } from '@heroicons/vue/24/outline';
 import PasswordInput from './PasswordInput.vue';
 import AppButton from '../shared/AppButton.vue';
 import { useAuthStore } from '../../stores/authStore';
@@ -53,9 +54,17 @@ const handleSubmit = async () => {
         v-model="password"
       />
 
-      <div v-if="authStore.error" class="text-red-500 text-sm text-center">
-        {{ authStore.error }}
-      </div>
+      <Transition name="slide-down">
+        <div v-if="authStore.error" class="p-4 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4 animate-shake">
+          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <ExclamationCircleIcon class="w-6 h-6 text-red-600" />
+          </div>
+          <div class="flex flex-col gap-0.5 pt-0.5">
+            <span class="text-sm font-bold text-red-900">Oops!</span>
+            <p class="text-sm text-red-600 leading-relaxed">{{ authStore.error }}</p>
+          </div>
+        </div>
+      </Transition>
 
       <div class="flex items-center justify-between">
         <label class="flex items-center gap-2 cursor-pointer">
@@ -76,3 +85,24 @@ const handleSubmit = async () => {
     </form>
   </div>
 </template>
+
+<style scoped>
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-down-enter-from { opacity: 0; transform: translateY(-20px); }
+.slide-down-leave-to { opacity: 0; transform: translateY(-10px); }
+</style>
