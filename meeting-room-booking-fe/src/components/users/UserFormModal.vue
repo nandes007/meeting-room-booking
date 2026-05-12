@@ -18,12 +18,12 @@ const emit = defineEmits(['close']);
 const userStore = useUserStore();
 const isSubmitting = ref(false);
 
-const form = reactive<UserRequest>({
+const form = reactive({
   name: '',
   email: '',
   username: '',
   password: '',
-  role: 'EMPLOYEE'
+  role: 'EMPLOYEE' as 'SUPERADMIN' | 'EMPLOYEE'
 });
 
 const roles = [
@@ -86,7 +86,7 @@ const resetForm = () => {
     <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="emit('close')"></div>
 
-      <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden glass animate-in fade-in zoom-in duration-300">
+      <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-y-auto max-h-[calc(100vh-2rem)] glass animate-in fade-in zoom-in duration-300 custom-scrollbar">
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-bold text-gray-900 font-display">
@@ -176,4 +176,21 @@ const resetForm = () => {
 
 .slide-down-enter-from { opacity: 0; transform: translateY(-20px); }
 .slide-down-leave-to { opacity: 0; transform: translateY(-10px); }
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #D1D5DB;
+}
 </style>
