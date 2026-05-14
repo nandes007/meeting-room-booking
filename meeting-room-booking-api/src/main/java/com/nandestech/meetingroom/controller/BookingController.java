@@ -1,6 +1,7 @@
 package com.nandestech.meetingroom.controller;
 
 import com.nandestech.meetingroom.dto.ApiResponse;
+import com.nandestech.meetingroom.dto.ApproveBookingRequest;
 import com.nandestech.meetingroom.dto.BookingRequest;
 import com.nandestech.meetingroom.dto.BookingResponse;
 import com.nandestech.meetingroom.service.BookingService;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -120,9 +122,10 @@ public class BookingController {
     public ResponseEntity<ApiResponse<Page<BookingResponse>>> getAllBookings(
             @Parameter(hidden = true) @RequestAttribute("X-Username") String username,
             @Parameter(hidden = true) @RequestAttribute("X-Role") String role,
+            @Parameter(description = "Filter by status (e.g., pending, approved, cancelled)", example = "pending") @RequestParam(required = false) String status,
             @Parameter(description = "Page number (1-indexed)", example = "1") @RequestParam(defaultValue = "1") int page,
             @Parameter(description = "Items per page", example = "10") @RequestParam(defaultValue = "10") int limit) {
-        Page<BookingResponse> data = bookingService.getAllBookings(role, username, page, limit);
+        Page<BookingResponse> data = bookingService.getAllBookings(role, username, page, limit, status);
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -268,5 +271,59 @@ public class BookingController {
                 .status("success")
                 .message("Booking cancelled successfully")
                 .build());
+    }
+
+    @PatchMapping("/{id}/approve")
+    @Operation(
+            summary = "Approve a booking request",
+            description = "Approve a pending booking request. Only ADMIN role is allowed to approve bookings."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Booking approved successfully",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                {
+                    "status": "success",
+                    "data": {
+                        "id": 1,
+                        "user_id": 1,
+                        "room_id": 1,
+                        "start_time": "2026-04-28 09:00:00",
+                        "end_time": "2026-04-28 10:00:00",
+                        "status": "approved",
+                        "description": "POC (Proof Of Concept) Meeting",
+                        "created_at": "2022-01-01T00:00:00Z",
+                        "updated_at": "2022-01-01T00:00:00Z"
+                    }
+                }
+                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to approve booking",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                {
+                    "status": "failed",
+                    "message": "failed to approve booking"
+                }
+                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                {
+                    "status": "unauthorized",
+                    "message": "Unauthorized"
+                }
+                """)))
+    })
+    public ResponseEntity<ApiResponse<BookingResponse>> approveBooking(
+            @PathVariable Long id,
+            @Valid @RequestBody ApproveBookingRequest request,
+            @Parameter(hidden = true) @RequestAttribute("X-Role") String role) {
+        try {
+            BookingResponse data = bookingService.approveBooking(id, request, role);
+            return ResponseEntity.ok(ApiResponse.success(data));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.failed("failed to approve booking"));
+        }
     }
 }

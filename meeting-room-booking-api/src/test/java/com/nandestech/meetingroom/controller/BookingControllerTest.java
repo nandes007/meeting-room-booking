@@ -1,5 +1,6 @@
 package com.nandestech.meetingroom.controller;
 
+import com.nandestech.meetingroom.dto.ApproveBookingRequest;
 import com.nandestech.meetingroom.dto.BookingRequest;
 import com.nandestech.meetingroom.dto.BookingResponse;
 import com.nandestech.meetingroom.entity.User;
@@ -146,7 +147,7 @@ public class BookingControllerTest {
         mockUserRole(ADMIN_ROLE);
         BookingResponse response = BookingResponse.builder().id(1L).description("Admin View").build();
         Page<BookingResponse> page = new PageImpl<>(Collections.singletonList(response));
-        when(bookingService.getAllBookings(eq(ADMIN_ROLE), eq(USERNAME), eq(1), eq(10))).thenReturn(page);
+        when(bookingService.getAllBookings(eq(ADMIN_ROLE), eq(USERNAME), eq(1), eq(10), any())).thenReturn(page);
     
         mockMvc.perform(get("/api/v1/bookings")
                         .header("Authorization", "Bearer " + TOKEN))
@@ -160,7 +161,7 @@ public class BookingControllerTest {
         mockUserRole(USER_ROLE);
         BookingResponse response = BookingResponse.builder().id(1L).description("User View").build();
         Page<BookingResponse> page = new PageImpl<>(Collections.singletonList(response));
-        when(bookingService.getAllBookings(eq(USER_ROLE), eq(USERNAME), eq(1), eq(10))).thenReturn(page);
+        when(bookingService.getAllBookings(eq(USER_ROLE), eq(USERNAME), eq(1), eq(10), any())).thenReturn(page);
     
         mockMvc.perform(get("/api/v1/bookings")
                         .header("Authorization", "Bearer " + TOKEN))
@@ -251,5 +252,25 @@ public class BookingControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value("failed"))
                 .andExpect(jsonPath("$.message").value("Access denied: You can only cancel your own bookings"));
+    }
+
+    @Test
+    void approveBooking_Success() throws Exception {
+        ApproveBookingRequest request = new ApproveBookingRequest("approve");
+        BookingResponse response = BookingResponse.builder()
+                .id(1L)
+                .status("approved")
+                .description("POC Meeting")
+                .build();
+
+        when(bookingService.approveBooking(eq(1L), any(ApproveBookingRequest.class), eq(ADMIN_ROLE))).thenReturn(response);
+
+        mockMvc.perform(patch("/api/v1/bookings/1/approve")
+                        .header("Authorization", "Bearer " + TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.status").value("approved"));
     }
 }

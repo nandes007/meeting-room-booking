@@ -1,5 +1,6 @@
 package com.nandestech.meetingroom.service;
 
+import com.nandestech.meetingroom.dto.ApproveBookingRequest;
 import com.nandestech.meetingroom.dto.BookingRequest;
 import com.nandestech.meetingroom.dto.BookingResponse;
 import com.nandestech.meetingroom.entity.Booking;
@@ -60,14 +61,24 @@ public class BookingService {
         return toResponse(booking);
     }
 
-    public Page<BookingResponse> getAllBookings(String role, String username, int page, int limit) {
+    public Page<BookingResponse> getAllBookings(String role, String username, int page, int limit, String status) {
         Pageable pageable = PageRequest.of(page - 1, limit);
-        if ("ADMIN".equalsIgnoreCase(role) || "SUPERADMIN".equalsIgnoreCase(role)) {
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(role) || "SUPERADMIN".equalsIgnoreCase(role);
+        
+        if (isAdmin) {
+            if (status != null && !status.isBlank()) {
+                return bookingRepository.findByStatus(status, pageable)
+                        .map(this::toResponse);
+            }
             return bookingRepository.findAll(pageable)
                     .map(this::toResponse);
         } else {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
+            if (status != null && !status.isBlank()) {
+                return bookingRepository.findByUserIdAndStatus(user.getId(), status, pageable)
+                        .map(this::toResponse);
+            }
             return bookingRepository.findByUserId(user.getId(), pageable)
                     .map(this::toResponse);
         }
@@ -128,6 +139,25 @@ public class BookingService {
         }
 
         bookingRepository.delete(booking);
+    }
+
+    public BookingResponse approveBooking(Long id, ApproveBookingRequest request, String role) {
+        if (!"ADMIN".equalsIgnoreCase(role) && !"SUPERADMIN".equalsIgnoreCase(role)) {
+            throw new RuntimeException("Access denied: Only administrators can approve bookings");
+        }
+
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (!"pending".equalsIgnoreCase(booking.getStatus())) {
+            throw new RuntimeException("Only pending bookings can be approved");
+        }
+
+        booking.setStatus("approved");
+        booking.setUpdatedAt(LocalDateTime.now());
+
+        booking = bookingRepository.save(booking);
+        return toResponse(booking);
     }
 
     private void validateBookingTime(LocalDateTime start, LocalDateTime end) {
