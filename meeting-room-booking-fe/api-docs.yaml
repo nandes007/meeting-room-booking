@@ -25,27 +25,59 @@ paths:
       tags:
       - User Management
       summary: Get all users
-      description: Retrieve a list of all users. Access restricted to SUPERADMIN.
+      description: Retrieve a paginated list of all users. Access restricted to SUPERADMIN.
       operationId: getAllUsers
+      parameters:
+      - name: page
+        in: query
+        description: Page number (1-indexed)
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+        example: 1
+      - name: limit
+        in: query
+        description: Items per page
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+        example: 10
       responses:
         "200":
           description: Users retrieved successfully
           content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/ApiResponseListUserResponse"
+            application/json:
+              example:
+                status: success
+                data:
+                  content:
+                  - id: 1
+                    name: test name
+                    username: testuser
+                    email: test@example.com
+                    created_at: 2026-05-11T10:00:00
+                    updated_at: 2026-05-11T10:00:00
+                  page:
+                    size: 10
+                    number: 0
+                    totalElements: 1
+                    totalPages: 1
         "400":
           description: Failed to retrieve users
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponseListUserResponse"
+                $ref: "#/components/schemas/ApiResponsePageUserResponse"
         "401":
           description: Unauthorized
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponseListUserResponse"
+                $ref: "#/components/schemas/ApiResponsePageUserResponse"
       security:
       - bearerAuth: []
     post:
@@ -194,6 +226,13 @@ paths:
       description: Admin sees all bookings. Normal users see only their own bookings.
       operationId: getAllBookings
       parameters:
+      - name: status
+        in: query
+        description: "Filter by status (e.g., pending, approved, cancelled)"
+        required: false
+        schema:
+          type: string
+        example: pending
       - name: page
         in: query
         description: Page number (1-indexed)
@@ -742,6 +781,58 @@ paths:
               example:
                 status: failed
                 message: "Access denied: Only administrators can edit bookings"
+  /api/v1/bookings/{id}/approve:
+    patch:
+      tags:
+      - Booking Management
+      summary: Approve a booking request
+      description: Approve a pending booking request. Only ADMIN role is allowed to
+        approve bookings.
+      operationId: approveBooking
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApproveBookingRequest"
+        required: true
+      responses:
+        "200":
+          description: Booking approved successfully
+          content:
+            application/json:
+              example:
+                status: success
+                data:
+                  id: 1
+                  user_id: 1
+                  room_id: 1
+                  start_time: 2026-04-28 09:00:00
+                  end_time: 2026-04-28 10:00:00
+                  status: approved
+                  description: POC (Proof Of Concept) Meeting
+                  created_at: 2022-01-01T00:00:00Z
+                  updated_at: 2022-01-01T00:00:00Z
+        "400":
+          description: Failed to approve booking
+          content:
+            application/json:
+              example:
+                status: failed
+                message: failed to approve booking
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                status: unauthorized
+                message: Unauthorized
   /api/v1/users/current:
     get:
       tags:
@@ -956,18 +1047,15 @@ components:
           $ref: "#/components/schemas/BookingResponse"
         message:
           type: string
-    ApiResponseListUserResponse:
+    ApproveBookingRequest:
       type: object
       properties:
         status:
           type: string
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/UserResponse"
-        message:
-          type: string
-    ApiResponsePageBookingResponse:
+          minLength: 1
+      required:
+      - status
+    ApiResponsePageUserResponse:
       type: object
       properties:
         status:
@@ -993,19 +1081,19 @@ components:
         number:
           type: integer
           format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean
         size:
           type: integer
           format: int32
         sort:
           $ref: "#/components/schemas/SortObject"
-        first:
-          type: boolean
-        last:
-          type: boolean
         content:
           type: array
           items:
-            $ref: "#/components/schemas/BookingResponse"
+            $ref: "#/components/schemas/UserResponse"
         empty:
           type: boolean
     PageableObject:
@@ -1035,6 +1123,15 @@ components:
           type: boolean
         empty:
           type: boolean
+    ApiResponsePageBookingResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          $ref: "#/components/schemas/PageObject"
+        message:
+          type: string
     ApiResponseString:
       type: object
       properties:
