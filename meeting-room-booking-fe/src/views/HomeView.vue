@@ -4,15 +4,26 @@ import { useAuthStore } from '@/stores/authStore';
 import { useBookingStore } from '@/stores/bookingStore';
 import WelcomeBanner from '@/components/home/WelcomeBanner.vue';
 import TodayBookingList from '@/components/home/TodayBookingList.vue';
+import NotificationBell from '@/components/home/NotificationBell.vue';
+import PendingBookingsModal from '@/components/home/PendingBookingsModal.vue';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { ref } from 'vue';
 
 const authStore = useAuthStore();
 const bookingStore = useBookingStore();
+const notificationStore = useNotificationStore();
+
+const isNotificationModalOpen = ref(false);
 
 onMounted(async () => {
   if (!authStore.user) {
     await authStore.getCurrentUser();
   }
   await bookingStore.fetchBookings();
+  
+  if (authStore.user?.role === 'SUPERADMIN') {
+    notificationStore.fetchPendingBookings();
+  }
 });
 
 const todayKey = computed(() => {
@@ -29,7 +40,14 @@ const displayName = computed(() => authStore.user?.name || 'User');
 
 <template>
   <div class="min-h-screen bg-white max-w-2xl mx-auto pb-24 px-4 pt-8">
-    <WelcomeBanner :user-name="displayName" />
+    <div class="flex items-start justify-between mb-2">
+      <WelcomeBanner :user-name="displayName" />
+      <NotificationBell 
+        v-if="authStore.user?.role === 'SUPERADMIN'"
+        :count="notificationStore.pendingCount"
+        @click="isNotificationModalOpen = true"
+      />
+    </div>
     
     <TodayBookingList 
       :bookings="todayBookings" 
@@ -47,5 +65,11 @@ const displayName = computed(() => authStore.user?.name || 'User');
         <p class="text-xl font-bold text-gray-900 mt-1">View All</p>
       </router-link>
     </div>
+
+    <!-- Modals -->
+    <PendingBookingsModal 
+      :is-open="isNotificationModalOpen"
+      @close="isNotificationModalOpen = false"
+    />
   </div>
 </template>

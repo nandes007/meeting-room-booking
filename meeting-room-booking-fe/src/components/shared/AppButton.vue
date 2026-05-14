@@ -2,6 +2,7 @@
 interface Props {
   label: string;
   variant?: 'primary' | 'outline' | 'social';
+  size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   isLoading?: boolean;
   fullWidth?: boolean;
@@ -10,6 +11,7 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
   variant: 'primary',
+  size: 'md',
   disabled: false,
   isLoading: false,
   fullWidth: true,
@@ -23,11 +25,12 @@ defineEmits(['click']);
   <button
     :type="type"
     :disabled="disabled || isLoading"
-    class="flex items-center justify-center gap-2 py-3 px-4 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed relative"
+    class="flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed relative"
     :class="[
       variant === 'primary' ? 'bg-lime text-gray-900 font-semibold rounded-3xl hover:bg-lime-dark' : '',
       variant === 'outline' ? 'bg-white border border-gray-200 text-gray-700 font-medium rounded-3xl hover:bg-gray-50' : '',
       variant === 'social' ? 'bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50' : '',
+      size === 'sm' ? 'py-2 px-4 text-sm' : 'py-3 px-4',
       fullWidth ? 'w-full' : ''
     ]"
     @click="$emit('click')"
