@@ -103,13 +103,17 @@ const handleDateSelect = (date: Date) => {
     </main>
 
     <!-- FAB -->
-    <button 
-      @click="isModalOpen = true"
-      class="fixed bottom-24 right-8 w-14 h-14 bg-lime text-gray-900 rounded-full shadow-lg flex items-center justify-center hover:bg-lime-dark hover:scale-105 transition-all duration-300 z-40 focus:outline-none focus:ring-4 focus:ring-lime/30"
-      aria-label="Add booking"
-    >
-      <PlusIcon class="w-8 h-8" />
-    </button>
+    <div class="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-2xl pointer-events-none z-40">
+      <div class="relative w-full h-full flex justify-end px-8">
+        <button 
+          @click="isModalOpen = true"
+          class="w-14 h-14 bg-lime text-gray-900 rounded-full shadow-lg flex items-center justify-center hover:bg-lime-dark hover:scale-105 transition-all duration-300 pointer-events-auto focus:outline-none focus:ring-4 focus:ring-lime/30"
+          aria-label="Add booking"
+        >
+          <PlusIcon class="w-8 h-8" />
+        </button>
+      </div>
+    </div>
 
     <!-- Create Modal -->
     <CreateBookingModal 
