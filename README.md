@@ -135,7 +135,7 @@ Before you begin, ensure you have the following installed:
 
 ---
 
-## 🗄️ Database Migrations (Liquibase)
+## Database Migrations (Liquibase)
 
 This project uses **Liquibase** to manage database schema changes. The master changelog is located at `src/main/resources/db/changelog/db.changelog-master.yaml`.
 
