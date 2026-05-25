@@ -46,9 +46,46 @@ The project follows a **Client-Server architecture** with a clear separation bet
 - **Styling**: TailwindCSS 4
 - **HTTP Client**: Axios
 
+## 🐳 Docker Quick Start (Recommended)
+
+The easiest and fastest way to get the entire application up and running is using Docker. This will spin up the PostgreSQL database, compile and package the backend API, automatically run the database migrations, and serve the frontend Vue application via Nginx.
+
+### 📋 Prerequisites
+- **Docker** and **Docker Compose** installed on your system.
+
+### 🚀 Running the Application
+1. **Build and start all services**:
+   Run the following command from the root of the project:
+   ```bash
+   docker compose up --build
+   ```
+
+2. **Access the Services**:
+   Once the containers are built and started:
+   - **Frontend App**: Open [http://localhost:5173](http://localhost:5173) in your browser.
+   - **Backend API**: The REST API is exposed at [http://localhost:8080](http://localhost:8080).
+   - **API Documentation (Swagger)**: View the Swagger UI at [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) to interact with and test the endpoints.
+   - **Database**: PostgreSQL is running inside the container and exposed on host port `5432` with:
+     - **Host**: `localhost`
+     - **Port**: `5432`
+     - **Database Name**: `meeting_room_booking_db`
+     - **Username**: `root`
+     - **Password**: `password`
+
+### 🛑 Stopping the Application
+To stop the services and retain your database data:
+```bash
+docker compose down
+```
+
+To stop the services and completely reset the database (delete persistent volumes):
+```bash
+docker compose down -v
+```
+
 ---
 
-## 📋 Prerequisites
+## 📋 Prerequisites (Manual Setup)
 
 Before you begin, ensure you have the following installed:
 - **Java JDK 21**
