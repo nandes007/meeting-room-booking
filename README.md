@@ -108,7 +108,7 @@ Before you begin, ensure you have the following installed:
      ```
 
 2. **Run Migrations**:
-   Before starting the app, you must run the database migrations using Liquibase (see the [Database Migrations](#-database-migrations) section).
+   Before starting the app, you must run the database migrations using Liquibase (see the [Database Migrations](#database-migrations-liquibase) section).
 
 3. **Start the Application**:
    ```bash
