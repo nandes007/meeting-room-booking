@@ -12,9 +12,27 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: !!localStorage.getItem('access_token'),
     isLoading: false,
     error: null,
+    pendingVerificationEmail: null,
   }),
 
   actions: {
+    // ponytail: backend has no register/OTP endpoints (user creation is
+    // SUPERADMIN-only via /api/v1/users) — these stubs keep the signup UI
+    // compiling; implement them when the API exists
+    async register(_data: any) {
+      this.error = 'Registration is not available yet';
+      throw new Error(this.error);
+    },
+
+    async verifyOtp(_code: string) {
+      this.error = 'Verification is not available yet';
+      return false;
+    },
+
+    async resendOtp() {
+      this.error = 'Verification is not available yet';
+    },
+
     async login(credentials: any) {
       this.isLoading = true;
       this.error = null;

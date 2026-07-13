@@ -16,6 +16,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  pendingVerificationEmail: string | null;
 }
 
 export type AuthMode = 'login' | 'signup';

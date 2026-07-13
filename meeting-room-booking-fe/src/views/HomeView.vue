@@ -28,7 +28,7 @@ onMounted(async () => {
 
 const todayKey = computed(() => {
   const today = new Date();
-  return today.toISOString().split('T')[0];
+  return today.toISOString().slice(0, 10);
 });
 
 const todayBookings = computed(() => {
