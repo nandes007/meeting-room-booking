@@ -131,9 +131,10 @@
 				<artifactId>liquibase-maven-plugin</artifactId>
 				<configuration>
 					<changeLogFile>src/main/resources/db/changelog/db.changelog-master.yaml</changeLogFile>
-					<url>jdbc:postgresql://localhost:5432/meeting_room_booking_db</url>
-					<username>root</username>
-					<password>password</password>
+					<url>jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?currentSchema=meeting_room_booking</url>
+					<username>postgres.xoqkwefecfjldbqlyckd</username>
+					<password>${env.DB_PASSWORD}</password>
+					<defaultSchemaName>meeting_room_booking</defaultSchemaName>
 				</configuration>
 			</plugin>
 			<plugin>
