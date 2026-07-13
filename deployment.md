@@ -18,11 +18,12 @@ the same domain at a path: `roombook.nandes.tech/api`.
 ```
 Browser ──► Cloudflare ──► host nginx :80 ──► frontend container :9100
                                                 ├─ /      → static SPA files
-                                                └─ /api/  → api container :8080 ──► db container :5432
+                                                └─ /api/  → api container :8080 ──► Supabase (postgres)
 ```
 
-The frontend container's nginx is the single entry point. The api and db
-containers are only reachable inside the compose network.
+The frontend container's nginx is the single entry point. The api container
+is only reachable inside the compose network. The database is Supabase — no
+db container in production.
 
 ## Steps
 
@@ -30,17 +31,28 @@ containers are only reachable inside the compose network.
 
 - [x] Rename `docker-compose.yml` → `docker-compose.local.yml` (local setup, includes db).
 - [x] Create `docker-compose.prod.yml`:
-  - `db` (postgres + volume, **no published port**), `api`, `frontend`.
+  - `api` + `frontend` only — database is Supabase, no db container.
   - Frontend built with `VITE_API_BASE_URL=/api`.
   - Only published port: `9100:80` on the frontend.
-  - Secrets (db password, etc.) from a server-side `.env` file, not committed.
+  - Supabase connection (`DB_URL`, `DB_USER`, `DB_PASSWORD`) from a
+    server-side `.env` file, not committed.
 - [x] Add `/api/` location to `meeting-room-booking-fe/nginx.conf`:
   proxy to `http://api:8080/`.
 
 ### 2. Server setup (8labs)
 
 - [ ] Clone/copy the project to the server.
-- [ ] Create `.env` with production db credentials.
+- [ ] Create `.env` with the Supabase connection:
+
+```env
+DB_URL=jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres
+DB_USER=postgres.<project-ref>
+DB_PASSWORD=<supabase-db-password>
+```
+
+  (Values from Supabase dashboard → Connect → JDBC; use the **session pooler**
+  on port 5432, not the transaction pooler on 6543 — Liquibase and Hibernate
+  need session mode.)
 - [ ] `podman compose -f docker-compose.prod.yml up -d --build`
   (or `podman-compose` depending on what's installed).
 
@@ -75,7 +87,7 @@ server {
 
 - [ ] Open `https://roombook.nandes.tech`, log in.
 - [ ] Confirm API calls in devtools hit `/api/...` and succeed.
-- [ ] Restart containers, confirm db data survives (volume works).
+- [ ] Confirm Liquibase migrations ran against Supabase (tables visible in dashboard).
 
 ## Deferred
 
