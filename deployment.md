@@ -1,16 +1,16 @@
-# Deployment Plan — roombook.nandes.tech
+# Deployment Plan — roombooking.nandes.tech
 
 Deploy frontend + backend to the 8labs server (podman), published at
-`roombook.nandes.tech` via Cloudflare.
+`roombooking.nandes.tech` via Cloudflare.
 
 ## Decision: no separate backend domain
 
 The frontend is a SPA, so the browser calls the API directly — it must be
 publicly reachable. Instead of a second subdomain, the API is served under
-the same domain at a path: `roombook.nandes.tech/api`.
+the same domain at a path: `roombooking.nandes.tech/api`.
 
 - One DNS record, one nginx server block, zero CORS config.
-- Add `api.roombook.nandes.tech` later only if other clients (mobile app,
+- Add `api.roombooking.nandes.tech` later only if other clients (mobile app,
   third parties) need the API.
 
 ## Architecture
@@ -55,6 +55,13 @@ DB_PASSWORD=<supabase-db-password>
   need session mode.)
 - [ ] `podman compose -f docker-compose.prod.yml up -d --build`
   (or `podman-compose` depending on what's installed).
+- [ ] Migrations run automatically on api startup (`SPRING_LIQUIBASE_ENABLED=true`);
+  the Makefile targets are local-dev only (need Maven, absent in the image).
+- [ ] Seed the superadmin (idempotent, one-off container):
+
+```bash
+podman-compose -f docker-compose.prod.yml run --rm api --spring.profiles.active=seed
+```
 
 ### 3. Host nginx
 
@@ -64,7 +71,7 @@ DB_PASSWORD=<supabase-db-password>
 server {
     listen 80;
     listen [::]:80;
-    server_name roombook.nandes.tech;
+    server_name roombooking.nandes.tech;
 
     location / {
         proxy_pass http://127.0.0.1:9100;
@@ -80,12 +87,12 @@ server {
 
 ### 4. Cloudflare
 
-- [ ] Add A record: `roombook` → server IP, proxied (orange cloud).
+- [ ] Add A record: `roombooking` → server IP, proxied (orange cloud).
 - [ ] HTTPS handled by Cloudflare (Flexible mode, same as existing project).
 
 ### 5. Verify
 
-- [ ] Open `https://roombook.nandes.tech`, log in.
+- [ ] Open `https://roombooking.nandes.tech`, log in.
 - [ ] Confirm API calls in devtools hit `/api/...` and succeed.
 - [ ] Confirm Liquibase migrations ran against Supabase (tables visible in dashboard).
 
